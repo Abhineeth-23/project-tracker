@@ -97,12 +97,12 @@
           <div v-for="slot in TIME_SLOTS" :key="slot.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
             <div class="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
               <span class="text-xs font-bold text-slate-600">{{ slot.label }}</span>
-              <span class="bg-white text-slate-500 text-xs font-bold px-2 py-0.5 rounded border border-slate-200">{{ getMembersForHour(slot.id).length }}</span>
+              <span class="bg-white text-slate-500 text-xs font-bold px-2 py-0.5 rounded border border-slate-200">{{ getMembersForHourUI(slot.id).length }}</span>
             </div>
             <div class="p-4 bg-white flex-1">
-              <p v-if="getMembersForHour(slot.id).length === 0" class="text-xs text-slate-400 italic">Empty</p>
+              <p v-if="getMembersForHourUI(slot.id).length === 0" class="text-xs text-slate-400 italic">Empty</p>
               <div v-else class="flex flex-col gap-1.5">
-                <span v-for="member in getMembersForHour(slot.id)" :key="member" class="text-xs text-slate-700 bg-slate-100 px-2 py-1.5 rounded border border-slate-100">
+                <span v-for="member in getMembersForHourUI(slot.id)" :key="member" class="text-xs text-slate-700 bg-slate-100 px-2 py-1.5 rounded border border-slate-100">
                   {{ member }}
                 </span>
               </div>
@@ -114,9 +114,9 @@
       <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div v-for="slot in TIME_SLOTS" :key="slot.id" class="mb-6">
           <h4 class="text-sm font-bold text-blue-700 mb-2">{{ slot.label }}:</h4>
-          <p class="text-sm text-slate-400 italic pl-4" v-if="getMembersForHour(slot.id).length === 0">None</p>
+          <p class="text-sm text-slate-400 italic pl-4" v-if="getRollsForHourPDF(slot.id).length === 0">None</p>
           <ul class="list-disc pl-8 space-y-1" v-else>
-            <li class="text-sm text-slate-800" v-for="member in getMembersForHour(slot.id)" :key="member">{{ member }}</li>
+            <li class="text-sm text-slate-800 font-mono" v-for="roll in getRollsForHourPDF(slot.id)" :key="roll">{{ roll }}</li>
           </ul>
         </div>
       </div>
@@ -139,7 +139,7 @@
             <tr v-else v-for="log in filteredLogs" :key="log.id" class="border-b border-slate-100 hover:bg-slate-50">
               <td class="p-4"><p class="font-bold text-sm text-slate-800">{{ log.name }}</p><p class="text-xs text-slate-500">{{ log.rollNumber }}</p></td>
               <td class="p-4 text-sm font-medium text-blue-700">{{ log.team }}</td>
-              <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded font-mono">{{ log.hours.length }} slots</span></td>
+              <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded font-mono">{{ log.hours?.length || 0 }} slots</span></td>
               <td class="p-4 text-xs text-slate-600 max-w-xs truncate" :title="log.todayLog">{{ log.todayLog }}</td>
               <td class="p-4 text-right">
                 <button class="text-blue-600 hover:underline text-xs font-bold mr-3">Edit</button>
@@ -163,7 +163,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable' // <-- FIX: Explicitly imported autoTable
+import autoTable from 'jspdf-autotable' // BUG FIX 3: Explicit Import
 
 // Constants
 const TIME_SLOTS = [
@@ -188,13 +188,14 @@ const allLogs = ref([])
 // Fetch Data
 onMounted(async () => {
   try {
-    // FIX: Added /api to the URL path
+    // BUG FIX 1: Included /api/ in the fetch URL
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
     const data = await res.json()
-    // FIX: Added safety check to prevent crash if data isn't an array
+    // BUG FIX 2: Safe fallback to prevent crash if data isn't an array
     allLogs.value = Array.isArray(data) ? data : []
   } catch (err) {
-    console.error("Failed to load logs", err)
+    console.error("Failed to load logs")
+    allLogs.value = []
   }
 })
 
@@ -202,7 +203,7 @@ onMounted(async () => {
 const filteredLogs = computed(() => allLogs.value.filter(log => log.date === selectedDate.value))
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
-// Group logs by Team (Kept your new feature!)
+// Group logs by Team
 const groupedLogs = computed(() => {
   const groups = {}
   filteredLogs.value.forEach(log => {
@@ -221,12 +222,18 @@ const activeTeamsCount = computed(() => {
   return Object.keys(groupedLogs.value).length
 })
 
-// Helper function for Hourly Presence (Returns Name + Roll Number)
-const getMembersForHour = (hourId) => {
+// UI Helper: Returns Name + Roll Number
+const getMembersForHourUI = (hourId) => {
   return filteredLogs.value
-    // FIX: Added optional chaining (?) to hours array
-    .filter(log => log.hours?.includes(hourId))
+    .filter(log => log.hours?.includes(hourId)) // BUG FIX 4: Optional chaining
     .map(log => `${log.name} (${log.rollNumber})`)
+}
+
+// PDF Helper: Returns strictly Roll Numbers
+const getRollsForHourPDF = (hourId) => {
+  return filteredLogs.value
+    .filter(log => log.hours?.includes(hourId)) // BUG FIX 4
+    .map(log => log.rollNumber)
 }
 
 // PDF Generator
@@ -235,37 +242,35 @@ const generatePDF = () => {
   doc.setFontSize(18)
   doc.text(`Project Daily Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  // 1. Hourly Presence (Using Specific Timings, Names, & Roll Numbers)
+  // 1. Hourly Presence (Roll Numbers Only for PDF)
   const presenceTable = TIME_SLOTS.map(slot => [
     slot.label, 
-    getMembersForHour(slot.id).join('\n') || 'None' // Kept your new line separation
+    getRollsForHourPDF(slot.id).join(', ') || 'None' 
   ])
 
   doc.setFontSize(14)
   doc.text("1. Hourly Presence Breakdown", 14, 35)
   
-  // FIX: Updated to autoTable(doc, {...})
+  // BUG FIX 3: Passed doc explicitly into autoTable
   autoTable(doc, {
     startY: 40,
-    head: [['Time Slot', 'Members Present']],
+    head: [['Time Slot', 'Roll Numbers Present']],
     body: presenceTable,
     theme: 'grid',
     headStyles: { fillColor: [21, 101, 192] },
     styles: { cellPadding: 3, overflow: 'linebreak' }
   })
 
-  // 2. Team Progress (Grouped visually by Team)
-  // FIX: Added optional chaining to lastAutoTable
+  // 2. Team Progress (Combined logs without individual names/rolls)
   const finalY = doc.lastAutoTable?.finalY || 40
   doc.text("2. Team Progress Updates", 14, finalY + 15)
   
-  // Kept your awesome bulleted formatting logic!
   const progressData = Object.entries(groupedLogs.value).map(([team, logs]) => {
-    const updates = logs.map(log => `• ${log.name} (${log.rollNumber}):\n  ${log.todayLog}`).join('\n\n')
-    return [team, updates]
+    // Combine logs into a unified list of tasks
+    const combinedUpdates = logs.map(log => `• ${log.todayLog}`).join('\n')
+    return [team, combinedUpdates]
   })
 
-  // FIX: Updated to autoTable(doc, {...})
   autoTable(doc, {
     startY: finalY + 20,
     head: [['Team', 'Progress Updates']],
@@ -279,12 +284,12 @@ const generatePDF = () => {
   doc.save(`Project_Report_${selectedDate.value}.pdf`)
 }
 
-// Copy Sheet logic
+// Copy Sheet logic (Uses Roll Numbers Only)
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
   TIME_SLOTS.forEach(slot => {
-    const members = getMembersForHour(slot.id).join(', ') || 'None'
-    text += `${slot.label}:\n${members}\n\n`
+    const rolls = getRollsForHourPDF(slot.id).join(', ') || 'None'
+    text += `${slot.label}:\n${rolls}\n\n`
   })
   navigator.clipboard.writeText(text)
   alert("Attendance copied to clipboard!")
