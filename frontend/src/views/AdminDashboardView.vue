@@ -29,7 +29,7 @@ const todayLogs = ref([])
 // Fetch all logs when the admin page loads
 onMounted(async () => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/logs`)
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
     const data = await res.json()
     // Filter for only today's logs
     const today = new Date().toISOString().split('T')[0]
