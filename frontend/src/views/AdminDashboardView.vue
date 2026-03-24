@@ -56,7 +56,7 @@ const generatePDF = () => {
   // Group by hour
   const hourlyData = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
   todayLogs.value.forEach(log => {
-    log.hours.forEach(hour => {
+    log.hours?.forEach(hour => {
       if (hourlyData[hour]) hourlyData[hour].push(log.rollNumber) // Using Roll Number instead of Name!
     })
   })
