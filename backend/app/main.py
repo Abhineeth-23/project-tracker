@@ -23,3 +23,7 @@ app.include_router(users.router)
 @app.get("/")
 def health_check():
     return {"status":"API is running securely!"}
+
+@app.get("/keep-alive")
+def keep_alive():
+    return {"status": "I am awake!"}
