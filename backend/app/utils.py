@@ -2,9 +2,7 @@ import os
 import requests
 
 # Grab the URL from the .env file
-#WEBHOOK_URL = os.environ.get("GOOGLE_SHEETS_WEBHOOK_URL")
-
-WEBHOOK_URL ="https://script.google.com/a/macros/hitam.org/s/AKfycbyntG4TqopRKZnhrHvTwkDvIMR7tk1hxOMBfyXtu41u4sLjAU5FxxIO9x83aMYUMVypHg/exec"
+WEBHOOK_URL = os.environ.get("GOOGLE_SHEETS_WEBHOOK_URL")
 
 def send_to_google_sheets(payload: dict):
     """
