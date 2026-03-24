@@ -100,7 +100,7 @@ const submitLog = async () => {
   message.value = ''
   
   try {
-    const res = await fetch('${import.meta.env.VITE_API_BASE_URL}/api/logs', {
+    const res = await fetch('https://project-tracker-nb5j.onrender.com/api/logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
