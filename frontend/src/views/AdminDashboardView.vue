@@ -11,7 +11,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Administrator (Admin)
           </span>
-          <button @click="$router.push('/')" class="hover:bg-white/20 p-2 rounded-full transition-all">
+          <button @click="$router.push('/')" class="hover:bg-white/20 p-2 rounded-full transition-all" title="Back to Workspace">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           </button>
         </div>
@@ -67,15 +67,24 @@
           <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
           Team Progress Updates
         </h3>
-        <div class="border border-dashed border-slate-300 rounded-xl p-8 mb-10 text-center bg-slate-50" v-if="filteredLogs.length === 0">
+        <div class="border border-dashed border-slate-300 rounded-xl p-8 mb-10 text-center bg-slate-50" v-if="Object.keys(groupedLogs).length === 0">
            <p class="text-slate-500 font-medium">No project updates submitted for this date.</p>
         </div>
-        <div v-else class="space-y-4 mb-10">
-           <div v-for="log in filteredLogs" :key="log.id" class="border border-slate-200 rounded-lg p-4 bg-white shadow-sm flex gap-4">
-              <div class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded text-xs h-fit whitespace-nowrap">{{ log.team }}</div>
-              <div>
-                <p class="text-sm font-semibold text-slate-800 mb-1">{{ log.rollNumber }} ({{ log.name }})</p>
-                <p class="text-sm text-slate-600">{{ log.todayLog }}</p>
+        <div v-else class="space-y-6 mb-10">
+           <div v-for="(logs, team) in groupedLogs" :key="team" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+              <div class="bg-blue-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
+                <span class="text-blue-800 font-bold text-sm tracking-wide">{{ team }}</span>
+                <span class="text-xs font-bold bg-blue-200 text-blue-800 px-2 py-1 rounded">{{ logs.length }} Updates</span>
+              </div>
+              <div class="divide-y divide-slate-100">
+                <div v-for="log in logs" :key="log.id" class="p-5 flex gap-4 hover:bg-slate-50 transition-colors">
+                  <div class="flex-1">
+                    <p class="text-sm font-bold text-slate-800 mb-1">
+                      {{ log.name }} <span class="text-slate-500 font-normal">({{ log.rollNumber }})</span>
+                    </p>
+                    <p class="text-sm text-slate-600 leading-relaxed">{{ log.todayLog }}</p>
+                  </div>
+                </div>
               </div>
            </div>
         </div>
@@ -84,16 +93,18 @@
           <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
           Presence Breakdown
         </h3>
-        <div class="grid grid-cols-3 gap-4">
-          <div v-for="slot in TIME_SLOTS" :key="slot.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="slot in TIME_SLOTS" :key="slot.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
             <div class="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
               <span class="text-xs font-bold text-slate-600">{{ slot.label }}</span>
-              <span class="bg-white text-slate-500 text-xs font-bold px-2 py-0.5 rounded border border-slate-200">{{ getRollsForHour(slot.id).length }}</span>
+              <span class="bg-white text-slate-500 text-xs font-bold px-2 py-0.5 rounded border border-slate-200">{{ getMembersForHour(slot.id).length }}</span>
             </div>
-            <div class="p-4 bg-white min-h-[80px]">
-              <p v-if="getRollsForHour(slot.id).length === 0" class="text-xs text-slate-400 italic">Empty</p>
-              <div v-else class="flex flex-wrap gap-1">
-                <span v-for="roll in getRollsForHour(slot.id)" :key="roll" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{{ roll }}</span>
+            <div class="p-4 bg-white flex-1">
+              <p v-if="getMembersForHour(slot.id).length === 0" class="text-xs text-slate-400 italic">Empty</p>
+              <div v-else class="flex flex-col gap-1.5">
+                <span v-for="member in getMembersForHour(slot.id)" :key="member" class="text-xs text-slate-700 bg-slate-100 px-2 py-1.5 rounded border border-slate-100">
+                  {{ member }}
+                </span>
               </div>
             </div>
           </div>
@@ -102,9 +113,11 @@
 
       <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div v-for="slot in TIME_SLOTS" :key="slot.id" class="mb-6">
-          <h4 class="text-sm font-bold text-blue-700 mb-1">{{ slot.label }}:</h4>
-          <p class="text-sm text-slate-600 italic pl-4" v-if="getRollsForHour(slot.id).length === 0">None</p>
-          <p class="text-sm text-slate-800 pl-4 font-mono" v-else>{{ getRollsForHour(slot.id).join(', ') }}</p>
+          <h4 class="text-sm font-bold text-blue-700 mb-2">{{ slot.label }}:</h4>
+          <p class="text-sm text-slate-400 italic pl-4" v-if="getMembersForHour(slot.id).length === 0">None</p>
+          <ul class="list-disc pl-8 space-y-1" v-else>
+            <li class="text-sm text-slate-800" v-for="member in getMembersForHour(slot.id)" :key="member">{{ member }}</li>
+          </ul>
         </div>
       </div>
 
@@ -125,9 +138,9 @@
             </tr>
             <tr v-else v-for="log in filteredLogs" :key="log.id" class="border-b border-slate-100 hover:bg-slate-50">
               <td class="p-4"><p class="font-bold text-sm text-slate-800">{{ log.name }}</p><p class="text-xs text-slate-500">{{ log.rollNumber }}</p></td>
-              <td class="p-4 text-sm">{{ log.team }}</td>
-              <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded">{{ log.hours.length }} slots</span></td>
-              <td class="p-4 text-xs text-slate-600 max-w-xs truncate">{{ log.todayLog }}</td>
+              <td class="p-4 text-sm font-medium text-blue-700">{{ log.team }}</td>
+              <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded font-mono">{{ log.hours.length }} slots</span></td>
+              <td class="p-4 text-xs text-slate-600 max-w-xs truncate" :title="log.todayLog">{{ log.todayLog }}</td>
               <td class="p-4 text-right">
                 <button class="text-blue-600 hover:underline text-xs font-bold mr-3">Edit</button>
                 <button class="text-red-600 hover:underline text-xs font-bold">Delete</button>
@@ -150,7 +163,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable' // <-- FIX 1: Explicitly imported autoTable
+import autoTable from 'jspdf-autotable' // <-- FIX: Explicitly imported autoTable
 
 // Constants
 const TIME_SLOTS = [
@@ -175,11 +188,10 @@ const allLogs = ref([])
 // Fetch Data
 onMounted(async () => {
   try {
-    // <-- FIX 2: Added /api to the URL
+    // FIX: Added /api to the URL path
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
     const data = await res.json()
-    
-    // <-- FIX 3: Safety check to ensure data is an array before assigning to prevent crashes
+    // FIX: Added safety check to prevent crash if data isn't an array
     allLogs.value = Array.isArray(data) ? data : []
   } catch (err) {
     console.error("Failed to load logs", err)
@@ -190,20 +202,31 @@ onMounted(async () => {
 const filteredLogs = computed(() => allLogs.value.filter(log => log.date === selectedDate.value))
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
+// Group logs by Team (Kept your new feature!)
+const groupedLogs = computed(() => {
+  const groups = {}
+  filteredLogs.value.forEach(log => {
+    if (!groups[log.team]) groups[log.team] = []
+    groups[log.team].push(log)
+  })
+  return groups
+})
+
 const uniqueMembersPresent = computed(() => {
   const uniqueRolls = new Set(filteredLogs.value.map(log => log.rollNumber))
   return uniqueRolls.size
 })
 
 const activeTeamsCount = computed(() => {
-  const uniqueTeams = new Set(filteredLogs.value.map(log => log.team))
-  return uniqueTeams.size
+  return Object.keys(groupedLogs.value).length
 })
 
-// Helper function for Hourly Presence
-const getRollsForHour = (hourId) => {
-  // <-- FIX 4: Added optional chaining (?) to hours just in case it's missing in DB
-  return filteredLogs.value.filter(log => log.hours?.includes(hourId)).map(log => log.rollNumber)
+// Helper function for Hourly Presence (Returns Name + Roll Number)
+const getMembersForHour = (hourId) => {
+  return filteredLogs.value
+    // FIX: Added optional chaining (?) to hours array
+    .filter(log => log.hours?.includes(hourId))
+    .map(log => `${log.name} (${log.rollNumber})`)
 }
 
 // PDF Generator
@@ -212,39 +235,45 @@ const generatePDF = () => {
   doc.setFontSize(18)
   doc.text(`Project Daily Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  // 1. Hourly Presence (Using Specific Timings & Roll Numbers)
+  // 1. Hourly Presence (Using Specific Timings, Names, & Roll Numbers)
   const presenceTable = TIME_SLOTS.map(slot => [
     slot.label, 
-    getRollsForHour(slot.id).join(', ') || 'None'
+    getMembersForHour(slot.id).join('\n') || 'None' // Kept your new line separation
   ])
 
   doc.setFontSize(14)
   doc.text("1. Hourly Presence Breakdown", 14, 35)
   
-  // <-- FIX 5: Changed to autoTable(doc, ...)
+  // FIX: Updated to autoTable(doc, {...})
   autoTable(doc, {
     startY: 40,
-    head: [['Time Slot', 'Roll Numbers Present']],
+    head: [['Time Slot', 'Members Present']],
     body: presenceTable,
     theme: 'grid',
-    headStyles: { fillColor: [21, 101, 192] }
+    headStyles: { fillColor: [21, 101, 192] },
+    styles: { cellPadding: 3, overflow: 'linebreak' }
   })
 
-  // 2. Team Progress
-  // <-- FIX 6: Added optional chaining to lastAutoTable just to be completely safe
+  // 2. Team Progress (Grouped visually by Team)
+  // FIX: Added optional chaining to lastAutoTable
   const finalY = doc.lastAutoTable?.finalY || 40
   doc.text("2. Team Progress Updates", 14, finalY + 15)
-  const progressData = filteredLogs.value.map(log => [
-    log.team, log.rollNumber, log.todayLog
-  ])
+  
+  // Kept your awesome bulleted formatting logic!
+  const progressData = Object.entries(groupedLogs.value).map(([team, logs]) => {
+    const updates = logs.map(log => `• ${log.name} (${log.rollNumber}):\n  ${log.todayLog}`).join('\n\n')
+    return [team, updates]
+  })
 
-  // <-- FIX 5: Changed to autoTable(doc, ...)
+  // FIX: Updated to autoTable(doc, {...})
   autoTable(doc, {
     startY: finalY + 20,
-    head: [['Team', 'Roll Number', 'Accomplished']],
+    head: [['Team', 'Progress Updates']],
     body: progressData,
     theme: 'grid',
-    headStyles: { fillColor: [45, 212, 191] }
+    headStyles: { fillColor: [45, 212, 191] },
+    styles: { cellPadding: 4, overflow: 'linebreak' },
+    columnStyles: { 0: { cellWidth: 40, fontStyle: 'bold' } }
   })
 
   doc.save(`Project_Report_${selectedDate.value}.pdf`)
@@ -254,8 +283,8 @@ const generatePDF = () => {
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
   TIME_SLOTS.forEach(slot => {
-    const rolls = getRollsForHour(slot.id).join(', ') || 'None'
-    text += `${slot.label}:\n${rolls}\n\n`
+    const members = getMembersForHour(slot.id).join(', ') || 'None'
+    text += `${slot.label}:\n${members}\n\n`
   })
   navigator.clipboard.writeText(text)
   alert("Attendance copied to clipboard!")
