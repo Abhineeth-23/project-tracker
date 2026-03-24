@@ -31,13 +31,13 @@
               <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Hours Present Today</label>
               <div class="flex flex-wrap gap-2">
                 <button 
-                  v-for="hour in [1, 2, 3, 4, 5, 6]" 
-                  :key="hour" 
+                  v-for="slot in TIME_SLOTS" 
+                  :key="slot.id" 
                   type="button" 
-                  @click="toggleHour(hour)" 
-                  :class="['px-5 py-2.5 rounded-xl border text-sm font-medium transition-all', selectedHours.includes(hour) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-blue-50']"
+                  @click="toggleHour(slot.id)" 
+                  :class="['px-5 py-2.5 rounded-xl border text-sm font-medium transition-all', selectedHours.includes(slot.id) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-blue-50']"
                 >
-                  Hour {{ hour }}
+                  {{ slot.label }}
                 </button>
               </div>
             </div>
@@ -70,6 +70,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+
+const TIME_SLOTS = [
+  { id: 1, label: "9:15 AM - 10:15 AM" },
+  { id: 2, label: "10:15 AM - 11:15 AM" },
+  { id: 3, label: "11:15 AM - 12:15 PM" },
+  { id: 4, label: "1:00 PM - 2:00 PM" },
+  { id: 5, label: "2:00 PM - 3:00 PM" },
+  { id: 6, label: "3:00 PM - 4:00 PM" }
+]
 
 const router = useRouter()
 const authStore = useAuthStore()

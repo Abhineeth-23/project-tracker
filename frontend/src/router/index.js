@@ -2,13 +2,20 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
 import UserDashboardView from '../views/UserDashboardView.vue'
+import AdminDashboardView from '../views/AdminDashboardView.vue'
+
+
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', redirect: '/login' },
     { path: '/login', component: LoginView },
-    { path: '/dashboard', component: UserDashboardView, meta: { requiresAuth: true } },
+    { path: '/dashboard', component: UserDashboardView, meta: { requiresAuth: true }},{
+  path: '/admin',
+  name: 'admin',
+  component: AdminDashboardView
+        } ,
     // Add Admin Dash later
   ]
 })
