@@ -100,7 +100,7 @@ const submitLog = async () => {
   message.value = ''
   
   try {
-    const res = await fetch('${import.meta.env.VITE_API_BASE_URL}/logs', {
+    const res = await fetch('${import.meta.env.VITE_API_BASE_URL}/api/logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

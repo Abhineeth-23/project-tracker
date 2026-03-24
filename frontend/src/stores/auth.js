@@ -7,7 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(rollNumber) {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rollNumber })
@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
   // --- NEW REGISTER FUNCTION ---
   async function register(userData) {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rollNumber })
