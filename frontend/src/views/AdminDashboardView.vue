@@ -25,7 +25,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-8">
-      <div class="flex justify-between items-center mb-6">
+      <div v-if="['daily', 'attendance', 'records'].includes(activeTab)" class="flex justify-between items-center mb-6">
         <div class="bg-white border border-slate-200 rounded-lg px-4 py-2 flex items-center shadow-sm">
           <input type="date" v-model="selectedDate" class="outline-none text-sm font-medium text-slate-700 bg-transparent">
         </div>
@@ -129,31 +129,113 @@
               <th class="p-4 font-bold">Team</th>
               <th class="p-4 font-bold">Time Slots</th>
               <th class="p-4 font-bold">Logs</th>
-              <th class="p-4 font-bold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="filteredLogs.length === 0">
-              <td colspan="5" class="p-8 text-center text-slate-500">No records found for this date.</td>
+              <td colspan="4" class="p-8 text-center text-slate-500">No records found for this date.</td>
             </tr>
             <tr v-else v-for="log in filteredLogs" :key="log.id" class="border-b border-slate-100 hover:bg-slate-50">
               <td class="p-4"><p class="font-bold text-sm text-slate-800">{{ log.name }}</p><p class="text-xs text-slate-500">{{ log.rollNumber }}</p></td>
               <td class="p-4 text-sm font-medium text-blue-700">{{ log.team }}</td>
               <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded font-mono">{{ log.hours?.length || 0 }} slots</span></td>
               <td class="p-4 text-xs text-slate-600 max-w-xs truncate" :title="log.todayLog">{{ log.todayLog }}</td>
-              <td class="p-4 text-right">
-                <button class="text-blue-600 hover:underline text-xs font-bold mr-3">Edit</button>
-                <button class="text-red-600 hover:underline text-xs font-bold">Delete</button>
-              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div v-if="activeTab === 'holidays' || activeTab === 'users'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        <h3 class="text-xl font-bold text-slate-700 mb-2">API Connection Required</h3>
-        <p class="text-slate-500">We need to update the FastAPI backend before we can manage Holidays, Users, and Teams.</p>
+      <div v-if="activeTab === 'holidays'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-fit">
+          <h3 class="text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+            Declare Holiday
+          </h3>
+          <form @submit.prevent="submitHoliday" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Select Date</label>
+              <input type="date" required v-model="newHolidayDate" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Holiday Title</label>
+              <input type="text" required v-model="newHolidayName" placeholder="e.g. UGADI" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+            </div>
+            <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all mt-2">
+              Push to Workspace
+            </button>
+          </form>
+        </div>
+        
+        <div class="col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2 mb-6">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            Active Holidays Registry
+          </h3>
+          <div v-if="allHolidays.length === 0" class="border border-dashed border-slate-300 rounded-lg p-8 text-center bg-slate-50">
+            <p class="text-slate-500 italic text-sm">No holidays have been declared yet.</p>
+          </div>
+          <div v-else class="space-y-3">
+            <div v-for="holiday in allHolidays" :key="holiday.id" class="flex justify-between items-center border border-slate-100 p-4 rounded-lg bg-slate-50 hover:bg-white transition-colors shadow-sm">
+              <div>
+                <p class="font-bold text-slate-800">{{ holiday.name }}</p>
+                <p class="text-xs text-slate-500 font-mono mt-1">{{ new Date(holiday.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) }}</p>
+              </div>
+              <button @click="removeHoliday(holiday.id)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'users'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-slate-800">Workspace Members Registry</h3>
+          <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">{{ allUsers.length }} Total Accounts</span>
+        </div>
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-white text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+              <th class="p-4 font-bold">Full Name</th>
+              <th class="p-4 font-bold">Roll Number</th>
+              <th class="p-4 font-bold">Team Assignment</th>
+              <th class="p-4 font-bold text-right">Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="allUsers.length === 0">
+              <td colspan="4" class="p-8 text-center text-slate-500">Loading user database...</td>
+            </tr>
+            <tr v-else v-for="user in allUsers" :key="user.id" class="border-b border-slate-100 hover:bg-slate-50">
+              <template v-if="editingUser && editingUser.id === user.id">
+                <td class="p-3"><input type="text" v-model="editingUser.name" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
+                <td class="p-3"><input type="text" v-model="editingUser.rollNumber" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
+                <td class="p-3">
+                  <select v-model="editingUser.team" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white">
+                    <option v-for="team in AVAILABLE_TEAMS" :key="team" :value="team">{{ team }}</option>
+                  </select>
+                </td>
+                <td class="p-3 text-right space-x-2">
+                  <button @click="saveUserEdit" class="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Save</button>
+                  <button @click="editingUser = null" class="bg-slate-200 text-slate-700 px-3 py-1 rounded text-xs font-bold hover:bg-slate-300">Cancel</button>
+                </td>
+              </template>
+              
+              <template v-else>
+                <td class="p-4 font-semibold text-slate-800 text-sm flex items-center gap-2">
+                  <span v-if="user.role === 'admin'" class="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded uppercase">Admin</span>
+                  {{ user.name }}
+                </td>
+                <td class="p-4 text-sm font-mono text-slate-600">{{ user.rollNumber }}</td>
+                <td class="p-4 text-sm font-medium text-blue-700">{{ user.team }}</td>
+                <td class="p-4 text-right">
+                  <button @click="startEdit(user)" class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit Profile</button>
+                  <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Revoke Access</button>
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
     </main>
@@ -163,7 +245,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable' // BUG FIX 3: Explicit Import
+import autoTable from 'jspdf-autotable'
 
 // Constants
 const TIME_SLOTS = [
@@ -180,30 +262,112 @@ const TABS = [
   { id: 'users', label: 'Users & Teams', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' }
 ]
 
-// State
+const AVAILABLE_TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect", "Management"]
+
+// Core State
 const activeTab = ref('daily')
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const allLogs = ref([])
+const allUsers = ref([])
+const allHolidays = ref([])
 
-// Fetch Data
-onMounted(async () => {
+// Form State
+const newHolidayDate = ref('')
+const newHolidayName = ref('')
+const editingUser = ref(null)
+
+// --- API FETCHING ---
+const fetchAllData = async () => {
   try {
-    // BUG FIX 1: Included /api/ in the fetch URL
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
-    const data = await res.json()
-    // BUG FIX 2: Safe fallback to prevent crash if data isn't an array
-    allLogs.value = Array.isArray(data) ? data : []
-  } catch (err) {
-    console.error("Failed to load logs")
-    allLogs.value = []
-  }
-})
+    const [logsRes, usersRes, holidaysRes] = await Promise.all([
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`)
+    ])
+    
+    const logsData = await logsRes.json()
+    allLogs.value = Array.isArray(logsData) ? logsData : []
+    
+    const usersData = await usersRes.json()
+    allUsers.value = Array.isArray(usersData) ? usersData : []
 
-// Computed Properties
+    const holidaysData = await holidaysRes.json()
+    allHolidays.value = Array.isArray(holidaysData) ? holidaysData : []
+  } catch (err) {
+    console.error("Failed to load dashboard data from API.")
+  }
+}
+
+onMounted(fetchAllData)
+
+// --- HOLIDAY LOGIC ---
+const submitHoliday = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: newHolidayDate.value, name: newHolidayName.value })
+    })
+    if (res.ok) {
+      await fetchAllData() // Refresh list
+      newHolidayDate.value = ''
+      newHolidayName.value = ''
+    } else {
+      const errorData = await res.json()
+      alert(`Error: ${errorData.detail || 'Could not declare holiday.'}`)
+    }
+  } catch (err) {
+    alert("Network error. Could not connect to backend.")
+  }
+}
+
+const removeHoliday = async (id) => {
+  if (!confirm("Are you sure you want to delete this holiday?")) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/${id}`, { method: 'DELETE' })
+    if (res.ok) await fetchAllData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// --- USER MANAGEMENT LOGIC ---
+const startEdit = (user) => {
+  editingUser.value = { ...user } // Create a copy to edit safely
+}
+
+const saveUserEdit = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${editingUser.value.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingUser.value)
+    })
+    if (res.ok) {
+      await fetchAllData() // Refresh list
+      editingUser.value = null // Close editor
+    } else {
+      alert("Failed to update user profile.")
+    }
+  } catch (err) {
+    alert("Network error.")
+  }
+}
+
+const removeUser = async (id) => {
+  if (!confirm("WARNING: Are you sure you want to permanently delete this user? This cannot be undone.")) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${id}`, { method: 'DELETE' })
+    if (res.ok) await fetchAllData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// --- LOG COMPUTEDS & HELPERS ---
 const filteredLogs = computed(() => allLogs.value.filter(log => log.date === selectedDate.value))
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
-// Group logs by Team
 const groupedLogs = computed(() => {
   const groups = {}
   filteredLogs.value.forEach(log => {
@@ -218,31 +382,26 @@ const uniqueMembersPresent = computed(() => {
   return uniqueRolls.size
 })
 
-const activeTeamsCount = computed(() => {
-  return Object.keys(groupedLogs.value).length
-})
+const activeTeamsCount = computed(() => Object.keys(groupedLogs.value).length)
 
-// UI Helper: Returns Name + Roll Number
 const getMembersForHourUI = (hourId) => {
   return filteredLogs.value
-    .filter(log => log.hours?.includes(hourId)) // BUG FIX 4: Optional chaining
+    .filter(log => log.hours?.includes(hourId))
     .map(log => `${log.name} (${log.rollNumber})`)
 }
 
-// PDF Helper: Returns strictly Roll Numbers
 const getRollsForHourPDF = (hourId) => {
   return filteredLogs.value
-    .filter(log => log.hours?.includes(hourId)) // BUG FIX 4
+    .filter(log => log.hours?.includes(hourId))
     .map(log => log.rollNumber)
 }
 
-// PDF Generator
+// --- PDF & EXPORT ---
 const generatePDF = () => {
   const doc = new jsPDF()
   doc.setFontSize(18)
   doc.text(`Project Daily Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  // 1. Hourly Presence (Roll Numbers Only for PDF)
   const presenceTable = TIME_SLOTS.map(slot => [
     slot.label, 
     getRollsForHourPDF(slot.id).join(', ') || 'None' 
@@ -250,8 +409,6 @@ const generatePDF = () => {
 
   doc.setFontSize(14)
   doc.text("1. Hourly Presence Breakdown", 14, 35)
-  
-  // BUG FIX 3: Passed doc explicitly into autoTable
   autoTable(doc, {
     startY: 40,
     head: [['Time Slot', 'Roll Numbers Present']],
@@ -261,12 +418,10 @@ const generatePDF = () => {
     styles: { cellPadding: 3, overflow: 'linebreak' }
   })
 
-  // 2. Team Progress (Combined logs without individual names/rolls)
   const finalY = doc.lastAutoTable?.finalY || 40
   doc.text("2. Team Progress Updates", 14, finalY + 15)
   
   const progressData = Object.entries(groupedLogs.value).map(([team, logs]) => {
-    // Combine logs into a unified list of tasks
     const combinedUpdates = logs.map(log => `• ${log.todayLog}`).join('\n')
     return [team, combinedUpdates]
   })
@@ -284,7 +439,6 @@ const generatePDF = () => {
   doc.save(`Project_Report_${selectedDate.value}.pdf`)
 }
 
-// Copy Sheet logic (Uses Roll Numbers Only)
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
   TIME_SLOTS.forEach(slot => {
