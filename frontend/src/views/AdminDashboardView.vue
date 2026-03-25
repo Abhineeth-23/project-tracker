@@ -30,6 +30,10 @@
           <input type="date" v-model="selectedDate" class="outline-none text-sm font-medium text-slate-700 bg-transparent">
         </div>
         
+        <button v-if="activeTab === 'daily'" @click="generateAttendancePDF" class="text-blue-600 border border-blue-200 hover:bg-blue-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm ml-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
+          Attendance Only
+        </button>
         <button v-if="activeTab === 'daily'" @click="generatePDF" class="text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path></svg>
           Download Data PDF
@@ -437,6 +441,28 @@ const generatePDF = () => {
   })
 
   doc.save(`Project_Report_${selectedDate.value}.pdf`)
+}
+
+const generateAttendancePDF = () => {
+  const doc = new jsPDF()
+  doc.setFontSize(18)
+  doc.text(`Attendance Report - ${formattedSelectedDate.value}`, 14, 22)
+
+  const presenceTable = TIME_SLOTS.map(slot => [
+    slot.label, 
+    getRollsForHourPDF(slot.id).join(', ') || 'None' 
+  ])
+
+  autoTable(doc, {
+    startY: 30,
+    head: [['Time Slot', 'Roll Numbers Present']],
+    body: presenceTable,
+    theme: 'grid',
+    headStyles: { fillColor: [21, 101, 192] },
+    styles: { cellPadding: 4, overflow: 'linebreak' }
+  })
+
+  doc.save(`Attendance_Report_${selectedDate.value}.pdf`)
 }
 
 const copyAttendance = () => {

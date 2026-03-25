@@ -8,19 +8,22 @@ from typing import List
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 @router.post("/register", response_model=schemas.UserResponse)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Check if the roll number is already in the database
-    existing_user = db.query(models.User).filter(models.User.rollNumber == user.rollNumber.upper()).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Roll number already exists")
+def register_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    clean_roll = user_data.rollNumber.strip().upper() # Forces uppercase instantly
     
-    # Create the new user
+    if not clean_roll:
+        raise HTTPException(status_code=400, detail="Roll number cannot be empty.")
+    
+    existing_user = db.query(models.User).filter(models.User.rollNumber == clean_roll).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Roll number already registered")
+        
     new_user = models.User(
-        name=user.name,
-        rollNumber=user.rollNumber.upper(), # Always store uppercase
-        team=user.team,
-        role="user",
-        createdAt=int(time.time() * 1000)
+        name=user_data.name,
+        rollNumber=clean_roll,
+        team=user_data.team,
+        password=user_data.password, # Save the password
+        role="student"
     )
     db.add(new_user)
     db.commit()
@@ -28,12 +31,16 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=schemas.UserResponse)
-def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    # Look up the user
-    db_user = db.query(models.User).filter(models.User.rollNumber == user.rollNumber.upper()).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+def login_user(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+    clean_roll = credentials.rollNumber.strip().upper() # Case-insensitive check
+    
+    user = db.query(models.User).filter(models.User.rollNumber == clean_roll).first()
+    
+    # Check if user exists AND if the password matches exactly (case-sensitive)
+    if not user or user.password != credentials.password:
+        raise HTTPException(status_code=401, detail="Invalid roll number or password.")
+        
+    return user
 
 @router.get("/",response_model=List[schemas.UserResponse])
 def get_all_users(db: Session = Depends(get_db)):

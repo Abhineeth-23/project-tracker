@@ -5,9 +5,11 @@ class UserCreate(BaseModel):
     name: str
     rollNumber: str
     team: str
+    password: str
 
 class UserLogin(BaseModel):
     rollNumber: str
+    password: str
 
 class UserResponse(BaseModel):
     id: int

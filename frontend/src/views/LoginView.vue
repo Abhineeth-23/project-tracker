@@ -11,6 +11,7 @@
       <div class="p-8">
         <div class="flex space-x-1 mb-8 bg-slate-100 p-1.5 rounded-lg">
           <button @click="authMode = 'login'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'login' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Student</button>
+          
           <button @click="authMode = 'register'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'register' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Register</button>
           <button @click="authMode = 'admin'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'admin' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800']">Admin</button>
         </div>
@@ -22,7 +23,11 @@
         <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="space-y-5">
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Roll Number</label>
-            <input type="text" required v-model="loginRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 24E51A6634">
+            <input type="text" required v-model="loginRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 2XE51AXXXX">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+            <input type="password" required v-model="loginPass" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
           </div>
           <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98]">
             Login to Workspace
@@ -31,12 +36,16 @@
 
         <form v-if="authMode === 'register'" @submit.prevent="handleRegister" class="space-y-5">
           <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Name</label>
             <input type="text" required v-model="regName" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="John Doe">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Roll Number</label>
-            <input type="text" required v-model="regRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 24E51A6634">
+            <input type="text" required v-model="regRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 2XE51AXXXX">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+            <input type="password" required v-model="regPass" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Create a password">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Team Assignment</label>
@@ -86,9 +95,11 @@ const regRoll = ref('')
 const regTeam = ref('Digi Yatra')
 const adminUser = ref('')
 const adminPass = ref('')
+const loginPass = ref('')
+const regPass = ref('')
 
 const handleLogin = async () => {
-  const success = await authStore.login(loginRoll.value)
+  const success = await authStore.login(loginRoll.value, loginPass.value)
   if (success) {
     if (authStore.user.role === 'admin') router.push('/admin')
     else router.push('/dashboard')
@@ -99,7 +110,8 @@ const handleRegister = async () => {
   const success = await authStore.register({
     name: regName.value,
     rollNumber: regRoll.value,
-    team: regTeam.value
+    team: regTeam.value,
+    password: regPass.value // Add password here
   })
   if (success) router.push('/dashboard')
 }

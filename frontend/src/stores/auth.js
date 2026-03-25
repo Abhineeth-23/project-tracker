@@ -5,13 +5,13 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('trackerUser')) || null)
   const authError = ref('')
 
-  async function login(rollNumber) {
+  async function login(rollNumber, password) {
     try {
       // FIX 2: Correct URL
       const res = await fetch('https://project-tracker-nb5j.onrender.com/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rollNumber })
+        body: JSON.stringify({ rollNumber, password })
       })
       if (res.ok) {
         const data = await res.json()

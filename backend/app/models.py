@@ -11,6 +11,7 @@ class User(Base):
     team = Column(String)
     role = Column(String, default="user") 
     createdAt = Column(BigInteger)
+    password = Column(String)
 
 # 2. The Daily Updates Table
 class Log(Base):
