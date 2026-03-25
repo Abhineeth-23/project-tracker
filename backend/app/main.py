@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import logs, users
-
+from .routers import logs, users, holidays
 from .database import engine, Base
 from .routers import logs
 
@@ -19,6 +19,9 @@ app.add_middleware(
 
 app.include_router(logs.router)
 app.include_router(users.router)
+app.include_router(logs.router)
+app.include_router(users.router)
+app.include_router(holidays.router)
 
 @app.get("/")
 def health_check():

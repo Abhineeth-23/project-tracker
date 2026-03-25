@@ -9,9 +9,10 @@
       </div>
       
       <div class="p-8">
-        <div class="flex space-x-2 mb-8 bg-slate-100 p-1.5 rounded-lg">
-          <button @click="authMode = 'login'" :class="['flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200', authMode === 'login' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Login</button>
-          <button @click="authMode = 'register'" :class="['flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200', authMode === 'register' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Register</button>
+        <div class="flex space-x-1 mb-8 bg-slate-100 p-1.5 rounded-lg">
+          <button @click="authMode = 'login'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'login' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Student</button>
+          <button @click="authMode = 'register'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'register' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-blue-600']">Register</button>
+          <button @click="authMode = 'admin'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 uppercase tracking-wide', authMode === 'admin' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800']">Admin</button>
         </div>
 
         <div v-if="authStore.authError" class="mb-6 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100">
@@ -21,7 +22,7 @@
         <form v-if="authMode === 'login'" @submit.prevent="handleLogin" class="space-y-5">
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Roll Number</label>
-            <input type="text" required v-model="loginRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. CS21B101">
+            <input type="text" required v-model="loginRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 24E51A6634">
           </div>
           <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98]">
             Login to Workspace
@@ -35,7 +36,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Roll Number</label>
-            <input type="text" required v-model="regRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. CS21B101">
+            <input type="text" required v-model="regRoll" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 24E51A6634">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Team Assignment</label>
@@ -45,6 +46,20 @@
           </div>
           <button type="submit" class="w-full bg-gradient-to-r from-teal-500 to-teal-400 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98]">
             Create Account
+          </button>
+        </form>
+
+        <form v-if="authMode === 'admin'" @submit.prevent="handleAdminLogin" class="space-y-5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Username</label>
+            <input type="text" required v-model="adminUser" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-slate-800 outline-none bg-slate-50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+            <input type="password" required v-model="adminPass" class="w-full rounded-xl border border-slate-200 py-3 px-4 focus:ring-2 focus:ring-slate-800 outline-none bg-slate-50">
+          </div>
+          <button type="submit" class="w-full bg-slate-800 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98] hover:bg-slate-700">
+            Access Admin Panel
           </button>
         </form>
       </div>
@@ -69,10 +84,15 @@ const loginRoll = ref('')
 const regName = ref('')
 const regRoll = ref('')
 const regTeam = ref('Digi Yatra')
+const adminUser = ref('')
+const adminPass = ref('')
 
 const handleLogin = async () => {
   const success = await authStore.login(loginRoll.value)
-  if (success) router.push('/dashboard')
+  if (success) {
+    if (authStore.user.role === 'admin') router.push('/admin')
+    else router.push('/dashboard')
+  }
 }
 
 const handleRegister = async () => {
@@ -82,5 +102,10 @@ const handleRegister = async () => {
     team: regTeam.value
   })
   if (success) router.push('/dashboard')
+}
+
+const handleAdminLogin = async () => {
+  const success = await authStore.adminLogin(adminUser.value, adminPass.value)
+  if (success) router.push('/admin')
 }
 </script>

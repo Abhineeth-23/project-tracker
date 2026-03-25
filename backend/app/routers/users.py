@@ -33,3 +33,49 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+@router.get("/",response_model=List[schemas.UserResponse])
+def get_all_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
+
+@router.put("/{user_id}", response_model=schemas.UserResponse)
+def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+    db_user = db.query (models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user_update.name: db_user.name = user_update.name
+    if user_update.rollNumber: db_user.rollNumber = user_update.rollNumber.upper()
+    if user_update.team: db_user.team = user_update.team
+    if user_update.role: db_user.role = user_update.role
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+@router.delete("/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(db_user)
+    db.commit()
+    return {"message": "User deleted successfully"}
+
+@router.post("/admin-login")
+def admin_login(credentials: schemas.AdminLogin):
+    """Secure login for the workspace administrator"""
+    if credentials.username == "admin" and credentials.password == "Hitam@2026":
+        return {
+            "id": 0,
+            "name": "Administrator",
+            "rollNumber": "ADMIN",
+            "team": "Management",
+            "role": "admin",
+            "createdAt": int(time.time() * 1000)
+        }
+    
+    # If the password is wrong, kick them out
+    raise HTTPException(status_code=401, detail="Invalid admin credentials")

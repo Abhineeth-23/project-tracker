@@ -53,11 +53,34 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function adminLogin(username, password) {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/admin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        user.value = data
+        localStorage.setItem('trackerUser', JSON.stringify(data))
+        authError.value = ''
+        return true
+      } else {
+        authError.value = 'Invalid username or password.'
+        return false
+      }
+    } catch (err) {
+      authError.value = 'Network error.'
+      return false
+    }
+  }
+
   function logout() {
     user.value = null
     localStorage.removeItem('trackerUser')
   }
 
   // Make sure to export register!
-  return { user, authError, login, register, logout }
+  return { user, authError, login, register, adminLogin, logout }
 })
