@@ -11,7 +11,8 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Administrator (Admin)
           </span>
-          <button @click="$router.push('/')" class="hover:bg-white/20 p-2 rounded-full transition-all" title="Back to Workspace">
+          <button @click="handleLogout" class="hover:bg-white/20 px-3 py-2 rounded-lg transition-all flex items-center gap-2" title="Secure Logout">
+            <span class="text-sm font-bold">Logout</span>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           </button>
         </div>
@@ -253,8 +254,20 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+
+// --- ROUTER & STORE INITIATION ---
+const router = useRouter()
+const authStore = useAuthStore()
+
+// --- THE NEW LOGOUT FUNCTION ---
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 
 // Constants
 const TIME_SLOTS = [
@@ -383,7 +396,6 @@ const filteredLogs = computed(() => {
 
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
-// Keep groupedLogs for the "Active Teams" stat card
 const groupedLogs = computed(() => {
   const groups = {}
   filteredLogs.value.forEach(log => {
@@ -393,7 +405,6 @@ const groupedLogs = computed(() => {
   return groups
 })
 
-// FIX: New computed exclusively for written updates. Silently strips out empty strings/spaces.
 const teamProgressUpdates = computed(() => {
   const groups = {}
   filteredLogs.value.forEach(log => {
@@ -451,13 +462,11 @@ const generatePDF = () => {
   const finalY = doc.lastAutoTable?.finalY || 40
   doc.text("2. Team Progress Updates", 14, finalY + 15)
   
-  // FIX: Use the cleaned teamProgressUpdates data for the PDF
   const progressData = Object.entries(teamProgressUpdates.value).map(([team, logs]) => {
     const combinedUpdates = logs.map(log => `• ${log.todayLog.trim()}`).join('\n')
     return [team, combinedUpdates]
   })
 
-  // Failsafe in case no written updates exist for the whole day
   if (progressData.length === 0) {
     progressData.push(['-', 'No written updates provided today.'])
   }
