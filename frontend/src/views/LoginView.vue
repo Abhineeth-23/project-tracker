@@ -26,7 +26,13 @@
           </div>
           <div>
             <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-            <input type="password" required v-model="loginPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+            <div class="relative">
+              <input :type="showLoginPass ? 'text' : 'password'" required v-model="loginPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 pl-3 pr-10 md:pl-4 md:pr-12 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+              <button type="button" @click="showLoginPass = !showLoginPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                <svg v-if="!showLoginPass" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.53-3.16l2.16 2.16m3.85-3.85a3.001 3.001 0 00-3.85-3.85l2.16-2.16c.55-.16 1.13-.25 1.73-.25 4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.14 3.74m-4.66-4.66l-5.6 5.6M3 3l18 18" /></svg>
+              </button>
+            </div>
           </div>
           <button type="submit" :disabled="authStore.isLoading" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98] text-sm md:text-base mt-2 disabled:opacity-70">
             Login to Workspace
@@ -50,7 +56,13 @@
           </div>
           <div>
             <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-            <input type="password" required v-model="regPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Create a password">
+            <div class="relative">
+              <input :type="showRegPass ? 'text' : 'password'" required v-model="regPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 pl-3 pr-10 md:pl-4 md:pr-12 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Create a password">
+              <button type="button" @click="showRegPass = !showRegPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                <svg v-if="!showRegPass" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.53-3.16l2.16 2.16m3.85-3.85a3.001 3.001 0 00-3.85-3.85l2.16-2.16c.55-.16 1.13-.25 1.73-.25 4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.14 3.74m-4.66-4.66l-5.6 5.6M3 3l18 18" /></svg>
+              </button>
+            </div>
           </div>
           <button type="submit" :disabled="authStore.isLoading" class="w-full bg-gradient-to-r from-teal-500 to-teal-400 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98] text-sm md:text-base mt-2 disabled:opacity-70">
             Create Account
@@ -64,7 +76,13 @@
           </div>
           <div>
             <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-            <input type="password" required v-model="adminPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:ring-2 focus:ring-slate-800 outline-none bg-slate-50">
+            <div class="relative">
+              <input :type="showAdminPass ? 'text' : 'password'" required v-model="adminPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 pl-3 pr-10 md:pl-4 md:pr-12 text-sm md:text-base focus:ring-2 focus:ring-slate-800 outline-none bg-slate-50">
+              <button type="button" @click="showAdminPass = !showAdminPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                <svg v-if="!showAdminPass" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.53-3.16l2.16 2.16m3.85-3.85a3.001 3.001 0 00-3.85-3.85l2.16-2.16c.55-.16 1.13-.25 1.73-.25 4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.14 3.74m-4.66-4.66l-5.6 5.6M3 3l18 18" /></svg>
+              </button>
+            </div>
           </div>
           <button type="submit" :disabled="authStore.isLoading" class="w-full bg-slate-800 text-white font-medium py-3 rounded-xl shadow-md transition-all active:scale-[0.98] hover:bg-slate-700 text-sm md:text-base mt-2 disabled:opacity-70">
             Access Admin Panel
@@ -86,6 +104,11 @@ const authStore = useAuthStore()
 // State
 const authMode = ref('login')
 const TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"]
+
+// Visibility Toggles
+const showLoginPass = ref(false)
+const showRegPass = ref(false)
+const showAdminPass = ref(false)
 
 // Form Inputs
 const loginRoll = ref('')
