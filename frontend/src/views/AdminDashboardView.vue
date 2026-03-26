@@ -369,7 +369,20 @@ const removeUser = async (id) => {
 }
 
 // --- LOG COMPUTEDS & HELPERS ---
-const filteredLogs = computed(() => allLogs.value.filter(log => log.date === selectedDate.value))
+const filteredLogs = computed(() => {
+  // First, get all logs for the selected date
+  const dayLogs = allLogs.value.filter(log => log.date === selectedDate.value)
+  
+  // Use a Map to deduplicate. If a roll number appears twice, 
+  // the Map automatically overwrites the old log with the new one!
+  const uniqueLogsMap = new Map()
+  dayLogs.forEach(log => {
+    uniqueLogsMap.set(log.rollNumber, log)
+  })
+  
+  // Convert the Map back into a clean array
+  return Array.from(uniqueLogsMap.values())
+})
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
 const groupedLogs = computed(() => {
@@ -389,15 +402,19 @@ const uniqueMembersPresent = computed(() => {
 const activeTeamsCount = computed(() => Object.keys(groupedLogs.value).length)
 
 const getMembersForHourUI = (hourId) => {
-  return filteredLogs.value
+  const members = filteredLogs.value
     .filter(log => log.hours?.includes(hourId))
     .map(log => `${log.name} (${log.rollNumber})`)
+    
+  return [...new Set(members)] // The Set automatically destroys any remaining duplicates
 }
 
 const getRollsForHourPDF = (hourId) => {
-  return filteredLogs.value
+  const rolls = filteredLogs.value
     .filter(log => log.hours?.includes(hourId))
     .map(log => log.rollNumber)
+    
+  return [...new Set(rolls)] // The Set automatically destroys any remaining duplicates
 }
 
 // --- PDF & EXPORT ---
