@@ -30,14 +30,16 @@
           <input type="date" v-model="selectedDate" class="outline-none text-sm font-medium text-slate-700 bg-transparent">
         </div>
         
-        <button v-if="activeTab === 'daily'" @click="generateAttendancePDF" class="text-blue-600 border border-blue-200 hover:bg-blue-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm ml-2">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-          Attendance Only
-        </button>
-        <button v-if="activeTab === 'daily'" @click="generatePDF" class="text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path></svg>
-          Download Data PDF
-        </button>
+        <div class="flex gap-2" v-if="activeTab === 'daily'">
+          <button @click="generatePDF" class="text-red-600 border border-red-200 hover:bg-red-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path></svg>
+            Daily Report
+          </button>
+          <button @click="generateAttendancePDF" class="text-blue-600 border border-blue-200 hover:bg-blue-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
+            Attendance Only
+          </button>
+        </div>
         <button v-if="activeTab === 'attendance'" @click="copyAttendance" class="bg-slate-800 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-all text-sm">
           Copy Sheet
         </button>
@@ -71,11 +73,11 @@
           <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
           Team Progress Updates
         </h3>
-        <div class="border border-dashed border-slate-300 rounded-xl p-8 mb-10 text-center bg-slate-50" v-if="Object.keys(groupedLogs).length === 0">
-           <p class="text-slate-500 font-medium">No project updates submitted for this date.</p>
+        <div class="border border-dashed border-slate-300 rounded-xl p-8 mb-10 text-center bg-slate-50" v-if="Object.keys(teamProgressUpdates).length === 0">
+           <p class="text-slate-500 font-medium">No written project updates submitted for this date.</p>
         </div>
         <div v-else class="space-y-6 mb-10">
-           <div v-for="(logs, team) in groupedLogs" :key="team" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+           <div v-for="(logs, team) in teamProgressUpdates" :key="team" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
               <div class="bg-blue-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
                 <span class="text-blue-800 font-bold text-sm tracking-wide">{{ team }}</span>
                 <span class="text-xs font-bold bg-blue-200 text-blue-800 px-2 py-1 rounded">{{ logs.length }} Updates</span>
@@ -143,7 +145,10 @@
               <td class="p-4"><p class="font-bold text-sm text-slate-800">{{ log.name }}</p><p class="text-xs text-slate-500">{{ log.rollNumber }}</p></td>
               <td class="p-4 text-sm font-medium text-blue-700">{{ log.team }}</td>
               <td class="p-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded font-mono">{{ log.hours?.length || 0 }} slots</span></td>
-              <td class="p-4 text-xs text-slate-600 max-w-xs truncate" :title="log.todayLog">{{ log.todayLog }}</td>
+              <td class="p-4 text-xs text-slate-600 max-w-xs truncate" :title="log.todayLog">
+                <span v-if="log.todayLog && log.todayLog.trim().length > 0">{{ log.todayLog }}</span>
+                <span v-else class="text-slate-400 italic font-medium">Attendance only</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -313,7 +318,7 @@ const submitHoliday = async () => {
       body: JSON.stringify({ date: newHolidayDate.value, name: newHolidayName.value })
     })
     if (res.ok) {
-      await fetchAllData() // Refresh list
+      await fetchAllData()
       newHolidayDate.value = ''
       newHolidayName.value = ''
     } else {
@@ -337,7 +342,7 @@ const removeHoliday = async (id) => {
 
 // --- USER MANAGEMENT LOGIC ---
 const startEdit = (user) => {
-  editingUser.value = { ...user } // Create a copy to edit safely
+  editingUser.value = { ...user }
 }
 
 const saveUserEdit = async () => {
@@ -348,8 +353,8 @@ const saveUserEdit = async () => {
       body: JSON.stringify(editingUser.value)
     })
     if (res.ok) {
-      await fetchAllData() // Refresh list
-      editingUser.value = null // Close editor
+      await fetchAllData()
+      editingUser.value = null
     } else {
       alert("Failed to update user profile.")
     }
@@ -370,26 +375,32 @@ const removeUser = async (id) => {
 
 // --- LOG COMPUTEDS & HELPERS ---
 const filteredLogs = computed(() => {
-  // First, get all logs for the selected date
   const dayLogs = allLogs.value.filter(log => log.date === selectedDate.value)
-  
-  // Use a Map to deduplicate. If a roll number appears twice, 
-  // the Map automatically overwrites the old log with the new one!
   const uniqueLogsMap = new Map()
-  dayLogs.forEach(log => {
-    uniqueLogsMap.set(log.rollNumber, log)
-  })
-  
-  // Convert the Map back into a clean array
+  dayLogs.forEach(log => { uniqueLogsMap.set(log.rollNumber, log) })
   return Array.from(uniqueLogsMap.values())
 })
+
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
+// Keep groupedLogs for the "Active Teams" stat card
 const groupedLogs = computed(() => {
   const groups = {}
   filteredLogs.value.forEach(log => {
     if (!groups[log.team]) groups[log.team] = []
     groups[log.team].push(log)
+  })
+  return groups
+})
+
+// FIX: New computed exclusively for written updates. Silently strips out empty strings/spaces.
+const teamProgressUpdates = computed(() => {
+  const groups = {}
+  filteredLogs.value.forEach(log => {
+    if (log.todayLog && log.todayLog.trim().length > 0) {
+      if (!groups[log.team]) groups[log.team] = []
+      groups[log.team].push(log)
+    }
   })
   return groups
 })
@@ -405,16 +416,14 @@ const getMembersForHourUI = (hourId) => {
   const members = filteredLogs.value
     .filter(log => log.hours?.includes(hourId))
     .map(log => `${log.name} (${log.rollNumber})`)
-    
-  return [...new Set(members)] // The Set automatically destroys any remaining duplicates
+  return [...new Set(members)]
 }
 
 const getRollsForHourPDF = (hourId) => {
   const rolls = filteredLogs.value
     .filter(log => log.hours?.includes(hourId))
     .map(log => log.rollNumber)
-    
-  return [...new Set(rolls)] // The Set automatically destroys any remaining duplicates
+  return [...new Set(rolls)]
 }
 
 // --- PDF & EXPORT ---
@@ -442,10 +451,16 @@ const generatePDF = () => {
   const finalY = doc.lastAutoTable?.finalY || 40
   doc.text("2. Team Progress Updates", 14, finalY + 15)
   
-  const progressData = Object.entries(groupedLogs.value).map(([team, logs]) => {
-    const combinedUpdates = logs.map(log => `• ${log.todayLog}`).join('\n')
+  // FIX: Use the cleaned teamProgressUpdates data for the PDF
+  const progressData = Object.entries(teamProgressUpdates.value).map(([team, logs]) => {
+    const combinedUpdates = logs.map(log => `• ${log.todayLog.trim()}`).join('\n')
     return [team, combinedUpdates]
   })
+
+  // Failsafe in case no written updates exist for the whole day
+  if (progressData.length === 0) {
+    progressData.push(['-', 'No written updates provided today.'])
+  }
 
   autoTable(doc, {
     startY: finalY + 20,
