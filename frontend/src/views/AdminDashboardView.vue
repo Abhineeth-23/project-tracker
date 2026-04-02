@@ -128,8 +128,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2">
           <div v-for="roll in dynamicOrderedRolls" :key="roll" class="flex justify-between items-center py-2.5 border-b border-slate-100">
             <span class="text-sm font-mono text-slate-700 font-semibold">{{ roll }}</span>
-            <span :class="['text-sm font-bold px-2 py-0.5 rounded', getHoursForRoll(roll) > 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400']">
-              {{ getHoursForRoll(roll) }} hrs
+            <span :class="['text-xs font-bold px-2 py-1 rounded', formatHoursForRoll(roll) !== '0 hours' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400']">
+              {{ formatHoursForRoll(roll) }}
             </span>
           </div>
         </div>
@@ -325,10 +325,15 @@ const dynamicOrderedRolls = computed(() => {
   return rolls
 })
 
-// Helper to quickly calculate a student's total hours
-const getHoursForRoll = (roll) => {
+// NEW: Formats the specific hours array (e.g., "1, 3, 4, 5 hours")
+const formatHoursForRoll = (roll) => {
   const log = filteredLogs.value.find(l => l.rollNumber === roll)
-  return log && log.hours ? log.hours.length : 0
+  if (log && log.hours && log.hours.length > 0) {
+    // Sort the hours numerically just in case they were clicked out of order
+    const sortedHours = [...log.hours].sort((a, b) => a - b)
+    return `${sortedHours.join(', ')} hours`
+  }
+  return '0 hours' // Fallback for absent students
 }
 
 // Core State
@@ -534,10 +539,10 @@ const generateAttendancePDF = () => {
   doc.setFontSize(18)
   doc.text(`Attendance Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  // USE THE DYNAMIC LIST HERE
+  // USE THE NEW FORMATTER HERE
   const attendanceData = dynamicOrderedRolls.value.map(roll => [
     roll, 
-    `${getHoursForRoll(roll)} hrs`
+    formatHoursForRoll(roll)
   ])
 
   autoTable(doc, {
@@ -556,9 +561,9 @@ const generateAttendancePDF = () => {
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
   
-  // USE THE DYNAMIC LIST HERE
+  // USE THE NEW FORMATTER HERE
   dynamicOrderedRolls.value.forEach(roll => {
-    text += `${roll}: ${getHoursForRoll(roll)}\n`
+    text += `${roll} - ${formatHoursForRoll(roll)}\n`
   })
   
   navigator.clipboard.writeText(text)
