@@ -45,6 +45,17 @@
               </div>
             </div>
             
+            <div v-if="previousGoal" class="bg-blue-50 border border-blue-100 rounded-xl p-4 md:p-5 relative overflow-hidden">
+              <div class="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4">
+                <svg class="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
+              </div>
+              <h3 class="text-[10px] md:text-xs font-bold text-blue-600 uppercase mb-1.5 flex items-center gap-1.5 relative z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Your Goal from {{ previousDate }}
+              </h3>
+              <p class="text-sm md:text-base text-blue-900 font-medium italic relative z-10">"{{ previousGoal }}"</p>
+            </div>
+            
             <div>
               <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Accomplished today</label>
               <textarea v-model="todayLog" rows="3" class="w-full rounded-xl border border-slate-200 p-3 md:p-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="What did you work on?"></textarea>
@@ -71,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue' // NEW: Imported onMounted
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -94,6 +105,40 @@ const todayLog = ref('')
 const tomorrowGoal = ref('')
 const isSubmitting = ref(false)
 const message = ref('')
+
+// NEW: Previous Goal State
+const previousGoal = ref('')
+const previousDate = ref('')
+
+// NEW: Fetch Previous Goal Logic
+onMounted(async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
+    const data = await res.json()
+    
+    if (Array.isArray(data)) {
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Isolate logs belonging ONLY to this user, from BEFORE today
+      const userPastLogs = data.filter(log => log.userId === authStore.user.id && log.date < today)
+      
+      if (userPastLogs.length > 0) {
+        // Sort them descending by date (newest first)
+        userPastLogs.sort((a, b) => new Date(b.date) - new Date(a.date))
+        
+        const lastLog = userPastLogs[0]
+        
+        // Only show it if they actually wrote a goal (didn't just submit attendance)
+        if (lastLog.tomorrowGoal && lastLog.tomorrowGoal.trim() !== '') {
+          previousGoal.value = lastLog.tomorrowGoal
+          previousDate.value = new Date(lastLog.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load previous goal", err)
+  }
+})
 
 const isFormValid = computed(() => {
   return selectedHours.value.length > 0 && 
