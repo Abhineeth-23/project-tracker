@@ -120,12 +120,18 @@
       </div>
 
       <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-8">
-        <div v-for="slot in TIME_SLOTS" :key="slot.id" class="mb-6">
-          <h4 class="text-sm font-bold text-blue-700 mb-2">{{ slot.label }}:</h4>
-          <p class="text-sm text-slate-400 italic pl-4" v-if="getRollsForHourPDF(slot.id).length === 0">None</p>
-          <ul class="list-disc pl-6 md:pl-8 space-y-1" v-else>
-            <li class="text-xs md:text-sm text-slate-800 font-mono" v-for="roll in getRollsForHourPDF(slot.id)" :key="roll">{{ roll }}</li>
-          </ul>
+        <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+          Daily Attendance Summary
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2">
+          <div v-for="roll in dynamicOrderedRolls" :key="roll" class="flex justify-between items-center py-2.5 border-b border-slate-100">
+            <span class="text-sm font-mono text-slate-700 font-semibold">{{ roll }}</span>
+            <span :class="['text-sm font-bold px-2 py-0.5 rounded', getHoursForRoll(roll) > 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400']">
+              {{ getHoursForRoll(roll) }} hrs
+            </span>
+          </div>
         </div>
       </div>
 
@@ -290,6 +296,40 @@ const TABS = [
 ]
 
 const AVAILABLE_TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect", "Management"]
+
+// --- NEW PHASE 1 ADDITIONS ---
+
+// 1. Rename to BASE
+const BASE_ORDERED_ROLLS = [
+  "25E51M0503", "24E51A6634", "24E51A6614", "24E51A6633", 
+  "24E51A6628", "24E51A6641", "24E51A6609", "24E51A6665", 
+  "23E51A6650", "23E51A6783", "24E55A0312", "23E51A67C5", 
+  "23E51A0561", "23E51A0508", "23E51A6708", "23E51A6711", 
+  "24E55A6604", "23E51A0514", "23E51A6799", "23E51A0503", 
+  "24E51A6618", "24E51A6650", "23E51A05G4", "23E51A6673"
+]
+
+// 2. Add the intelligent merging logic
+const dynamicOrderedRolls = computed(() => {
+  const rolls = [...BASE_ORDERED_ROLLS] // Start with your required order
+  
+  // Scan the live database of users
+  allUsers.value.forEach(user => {
+    // If we find a new user not in the list, append them to the end
+    // (We also ignore the 'ADMIN' account so it doesn't show up in attendance)
+    if (!rolls.includes(user.rollNumber) && user.rollNumber !== 'ADMIN') {
+      rolls.push(user.rollNumber)
+    }
+  })
+  
+  return rolls
+})
+
+// Helper to quickly calculate a student's total hours
+const getHoursForRoll = (roll) => {
+  const log = filteredLogs.value.find(l => l.rollNumber === roll)
+  return log && log.hours ? log.hours.length : 0
+}
 
 // Core State
 const activeTab = ref('daily')
@@ -494,18 +534,20 @@ const generateAttendancePDF = () => {
   doc.setFontSize(18)
   doc.text(`Attendance Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  const presenceTable = TIME_SLOTS.map(slot => [
-    slot.label, 
-    getRollsForHourPDF(slot.id).join(', ') || 'None' 
+  // USE THE DYNAMIC LIST HERE
+  const attendanceData = dynamicOrderedRolls.value.map(roll => [
+    roll, 
+    `${getHoursForRoll(roll)} hrs`
   ])
 
   autoTable(doc, {
     startY: 30,
-    head: [['Time Slot', 'Roll Numbers Present']],
-    body: presenceTable,
+    head: [['Roll Number', 'Hours Attended']],
+    body: attendanceData,
     theme: 'grid',
     headStyles: { fillColor: [21, 101, 192] },
-    styles: { cellPadding: 4, overflow: 'linebreak' }
+    styles: { cellPadding: 4 },
+    columnStyles: { 0: { fontStyle: 'bold' } }
   })
 
   doc.save(`Attendance_Report_${selectedDate.value}.pdf`)
@@ -513,10 +555,12 @@ const generateAttendancePDF = () => {
 
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
-  TIME_SLOTS.forEach(slot => {
-    const rolls = getRollsForHourPDF(slot.id).join(', ') || 'None'
-    text += `${slot.label}:\n${rolls}\n\n`
+  
+  // USE THE DYNAMIC LIST HERE
+  dynamicOrderedRolls.value.forEach(roll => {
+    text += `${roll}: ${getHoursForRoll(roll)}\n`
   })
+  
   navigator.clipboard.writeText(text)
   alert("Attendance copied to clipboard!")
 }
