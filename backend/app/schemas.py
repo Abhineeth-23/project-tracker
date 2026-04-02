@@ -57,3 +57,23 @@ class HolidayResponse(BaseModel):
 class AdminLogin(BaseModel):
     username: str
     password: str
+
+class MoMCreateText(BaseModel):
+    date: str
+    agenda: str
+    created_by: str
+    attendees: Optional[str] = ""
+    content: str
+    
+class MoMResponse(BaseModel):
+    id: int
+    date: str
+    agenda: str
+    created_by: str
+    attendees: Optional[str] = None
+    content: Optional[str] = None
+    file_name: Optional[str] = None
+    file_path: Optional[str] = None
+
+    class Config:
+        from_attributes = True

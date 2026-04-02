@@ -74,7 +74,9 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("/admin-login")
 def admin_login(credentials: schemas.AdminLogin):
-    """Secure login for the workspace administrator"""
+    """Secure login for the workspace administrator and viewers"""
+    
+    # 1. Full Admin Login
     if credentials.username == "admin" and credentials.password == "Hitam@2026":
         return {
             "id": 0,
@@ -84,6 +86,17 @@ def admin_login(credentials: schemas.AdminLogin):
             "role": "admin",
             "createdAt": int(time.time() * 1000)
         }
+        
+    # 2. NEW: View-Only Executive Login
+    elif credentials.username == "viewer" and credentials.password == "View@2026":
+        return {
+            "id": -1,
+            "name": "Executive",
+            "rollNumber": "VIEWER",
+            "team": "Management",
+            "role": "viewer", # Notice the different role here!
+            "createdAt": int(time.time() * 1000)
+        }
     
-    # If the password is wrong, kick them out
-    raise HTTPException(status_code=401, detail="Invalid admin credentials")
+    # If the password is wrong for both, kick them out
+    raise HTTPException(status_code=401, detail="Invalid admin or viewer credentials")

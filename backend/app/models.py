@@ -35,3 +35,16 @@ class Holiday(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(String, unique=True, index=True)
     name = Column(String)
+
+# 4. Minutes of Meeting Table
+class MoM(Base):
+    __tablename__ = "moms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String)
+    agenda = Column(String)
+    attendees = Column(String, nullable=True)
+    content = Column(String, nullable=True)
+    created_by = Column(String)
+    file_name = Column(String, nullable=True)
+    file_path = Column(String, nullable=True)

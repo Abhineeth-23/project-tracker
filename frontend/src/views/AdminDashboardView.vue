@@ -9,8 +9,8 @@
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
           <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            <span class="hidden sm:inline">Administrator (Admin)</span>
-            <span class="sm:hidden">Admin</span>
+            <span class="hidden sm:inline">{{ authStore.user?.role === 'viewer' ? 'Executive (View Only)' : 'Administrator (Admin)' }}</span>
+            <span class="sm:hidden">{{ authStore.user?.role === 'viewer' ? 'Exec' : 'Admin' }}</span>
           </span>
           <button @click="handleLogout" class="hover:bg-white/20 px-2 py-2 rounded-lg transition-all flex items-center gap-1" title="Secure Logout">
             <span class="text-xs md:text-sm font-bold">Logout</span>
@@ -165,7 +165,7 @@
       </div>
 
       <div v-if="activeTab === 'holidays'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
+        <div v-if="authStore.user?.role === 'admin'" class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
           <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
             Declare Holiday
@@ -185,7 +185,7 @@
           </form>
         </div>
         
-        <div class="col-span-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+        <div :class="[authStore.user?.role === 'admin' ? 'col-span-1 lg:col-span-2' : 'col-span-1 lg:col-span-3', 'bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6']">
           <h3 class="text-base md:text-lg font-bold text-blue-700 flex items-center gap-2 mb-6">
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
             Active Holidays Registry
@@ -199,7 +199,7 @@
                 <p class="font-bold text-slate-800 text-sm md:text-base">{{ holiday.name }}</p>
                 <p class="text-[10px] md:text-xs text-slate-500 font-mono mt-1">{{ new Date(holiday.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) }}</p>
               </div>
-              <button @click="removeHoliday(holiday.id)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors">
+              <button v-if="authStore.user?.role === 'admin'" @click="removeHoliday(holiday.id)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors">
                 <svg class="w-4 h-4 md:w-5 md:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               </button>
             </div>
@@ -219,7 +219,7 @@
                 <th class="p-4 font-bold">Full Name</th>
                 <th class="p-4 font-bold">Roll Number</th>
                 <th class="p-4 font-bold">Team Assignment</th>
-                <th class="p-4 font-bold text-right">Admin Actions</th>
+                <th v-if="authStore.user?.role === 'admin'" class="p-4 font-bold text-right">Admin Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -243,12 +243,12 @@
                 
                 <template v-else>
                   <td class="p-4 font-semibold text-slate-800 text-sm flex items-center gap-2">
-                    <span v-if="user.role === 'admin'" class="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">Admin</span>
+                    <span v-if="user.role === 'admin' || user.role === 'viewer'" class="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">Admin</span>
                     <span class="truncate">{{ user.name }}</span>
                   </td>
                   <td class="p-4 text-sm font-mono text-slate-600">{{ user.rollNumber }}</td>
                   <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">{{ user.team }}</td>
-                  <td class="p-4 text-right whitespace-nowrap">
+                  <td v-if="authStore.user?.role === 'admin'" class="p-4 text-right whitespace-nowrap">
                     <button @click="startEdit(user)" class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit Profile</button>
                     <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Revoke Access</button>
                   </td>
@@ -256,6 +256,115 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'mom'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div v-if="authStore.user?.role === 'admin'" class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-fit">
+          <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">Log Meeting</h3>
+          </div>
+          
+          <div class="p-6">
+            <div class="flex space-x-1 mb-6 bg-slate-100 p-1 rounded-lg">
+              <button @click="momFormMode = 'text'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 tracking-wide', momFormMode === 'text' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700']">📝 Write Note</button>
+              <button @click="momFormMode = 'file'" :class="['flex-1 py-2 rounded-md text-xs font-bold transition-all duration-200 tracking-wide', momFormMode === 'file' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700']">📎 Upload File</button>
+            </div>
+
+            <form @submit.prevent="submitMoM" class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Meeting Date</label>
+                <input type="date" required v-model="newMomDate" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Agenda / Topic</label>
+                <input type="text" required v-model="newMomAgenda" placeholder="e.g. Frontend Sync" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Attendees (Optional)</label>
+                <input type="text" v-model="newMomAttendees" placeholder="e.g. John, Sarah, Mike" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none">
+              </div>
+              
+              <div v-if="momFormMode === 'text'">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Meeting Notes</label>
+                <textarea required v-model="newMomContent" rows="5" class="w-full rounded-lg border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none resize-none" placeholder="Enter key points and action items..."></textarea>
+              </div>
+
+              <div v-if="momFormMode === 'file'">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Attach Document (PDF, DOCX)</label>
+                <input type="file" required @change="handleFileUpload" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+              </div>
+
+              <button type="submit" :disabled="isSubmittingMoM" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all mt-4 text-sm disabled:opacity-50">
+                {{ isSubmittingMoM ? 'Saving...' : 'Save to Archive' }}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div :class="[authStore.user?.role === 'admin' ? 'col-span-1 lg:col-span-2' : 'col-span-1 lg:col-span-3', 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden']">
+          <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h3 class="text-base md:text-lg font-bold text-slate-800">Minutes Archive</h3>
+            <div class="relative w-full sm:w-64">
+              <input type="text" v-model="momSearchQuery" placeholder="Search agendas or dates..." class="w-full rounded-full border border-slate-300 py-1.5 pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+          </div>
+          
+          <div class="p-6">
+            <div v-if="filteredMoMs.length === 0" class="border border-dashed border-slate-300 rounded-lg p-10 text-center bg-slate-50">
+              <p class="text-slate-500 font-medium">No meeting records found.</p>
+            </div>
+            
+            <div v-else class="space-y-4">
+              <div v-for="mom in filteredMoMs" :key="mom.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all bg-white">
+                
+                <div @click="toggleMoM(mom.id)" class="px-5 py-4 cursor-pointer hover:bg-slate-50 flex items-center justify-between group">
+                  <div class="flex items-center gap-4">
+                    <div :class="['p-2.5 rounded-lg text-white shrink-0', mom.file_path ? 'bg-amber-500' : 'bg-blue-500']">
+                      <svg v-if="mom.file_path" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">{{ mom.agenda }}</h4>
+                      <p class="text-[10px] md:text-xs text-slate-500 font-mono mt-0.5">{{ new Date(mom.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) }} • Logged by {{ mom.created_by }}</p>
+                    </div>
+                  </div>
+                  <svg :class="['w-5 h-5 text-slate-400 transition-transform duration-200', expandedMoMs.includes(mom.id) ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+
+                <div v-if="expandedMoMs.includes(mom.id)" class="border-t border-slate-100 bg-slate-50 px-5 py-4">
+                  <div class="mb-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Attendees</p>
+                    <p class="text-sm text-slate-700">{{ mom.attendees || 'Not specified' }}</p>
+                  </div>
+                  
+                  <div v-if="mom.content">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Meeting Notes</p>
+                    <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                      {{ mom.content }}
+                    </div>
+                  </div>
+
+                  <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                      <svg class="w-6 h-6 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      <span class="text-sm font-medium text-slate-700 truncate">{{ mom.file_name }}</span>
+                    </div>
+                    <button @click="downloadMoM(mom.id, mom.file_name)" class="bg-slate-100 hover:bg-blue-50 text-blue-600 font-bold py-1.5 px-4 rounded text-xs transition-colors shrink-0 border border-slate-200">
+                      Download
+                    </button>
+                  </div>
+                  
+                  <div v-if="authStore.user?.role === 'admin'" class="mt-4 flex justify-end">
+                    <button @click="removeMoM(mom.id)" class="text-xs text-red-500 hover:text-red-700 font-bold underline">Delete Record</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -291,6 +400,7 @@ const TABS = [
   { id: 'daily', label: 'Daily Report', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'attendance', label: 'Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
   { id: 'records', label: 'Records', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>' },
+  { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' },
   { id: 'users', label: 'Users & Teams', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' }
 ]
@@ -316,8 +426,8 @@ const dynamicOrderedRolls = computed(() => {
   // Scan the live database of users
   allUsers.value.forEach(user => {
     // If we find a new user not in the list, append them to the end
-    // (We also ignore the 'ADMIN' account so it doesn't show up in attendance)
-    if (!rolls.includes(user.rollNumber) && user.rollNumber !== 'ADMIN') {
+    // (We also ignore the 'ADMIN' and 'VIEWER' accounts so they don't show up in attendance)
+    if (!rolls.includes(user.rollNumber) && user.rollNumber !== 'ADMIN' && user.rollNumber !== 'VIEWER') {
       rolls.push(user.rollNumber)
     }
   })
@@ -342,19 +452,32 @@ const selectedDate = ref(new Date().toISOString().split('T')[0])
 const allLogs = ref([])
 const allUsers = ref([])
 const allHolidays = ref([])
+const allMoMs = ref([]) // NEW: MoM Data
 
 // Form State
 const newHolidayDate = ref('')
 const newHolidayName = ref('')
 const editingUser = ref(null)
 
+// NEW: MoM States
+const momSearchQuery = ref('')
+const expandedMoMs = ref([])
+const momFormMode = ref('text')
+const isSubmittingMoM = ref(false)
+const newMomDate = ref(new Date().toISOString().split('T')[0])
+const newMomAgenda = ref('')
+const newMomAttendees = ref('')
+const newMomContent = ref('')
+const newMomFile = ref(null)
+
 // --- API FETCHING ---
 const fetchAllData = async () => {
   try {
-    const [logsRes, usersRes, holidaysRes] = await Promise.all([
+    const [logsRes, usersRes, holidaysRes, momRes] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`) // NEW
     ])
     
     const logsData = await logsRes.json()
@@ -365,12 +488,118 @@ const fetchAllData = async () => {
 
     const holidaysData = await holidaysRes.json()
     allHolidays.value = Array.isArray(holidaysData) ? holidaysData : []
+
+    const momData = await momRes.json()
+    allMoMs.value = Array.isArray(momData) ? momData : [] // NEW
   } catch (err) {
     console.error("Failed to load dashboard data from API.")
   }
 }
 
 onMounted(fetchAllData)
+
+// --- MoM LOGIC ---
+const handleFileUpload = (event) => {
+  newMomFile.value = event.target.files[0]
+}
+
+const toggleMoM = (id) => {
+  if (expandedMoMs.value.includes(id)) {
+    expandedMoMs.value = expandedMoMs.value.filter(mId => mId !== id)
+  } else {
+    expandedMoMs.value.push(id)
+  }
+}
+
+const filteredMoMs = computed(() => {
+  if (!momSearchQuery.value) return allMoMs.value
+  const query = momSearchQuery.value.toLowerCase()
+  return allMoMs.value.filter(mom => 
+    mom.agenda.toLowerCase().includes(query) || 
+    mom.date.includes(query) ||
+    (mom.attendees && mom.attendees.toLowerCase().includes(query))
+  )
+})
+
+const submitMoM = async () => {
+  isSubmittingMoM.value = true
+  try {
+    let res;
+    // Handle Text Notes
+    if (momFormMode.value === 'text') {
+      res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: newMomDate.value,
+          agenda: newMomAgenda.value,
+          attendees: newMomAttendees.value,
+          content: newMomContent.value,
+          created_by: authStore.user?.name || 'Admin'
+        })
+      })
+    } 
+    // Handle File Uploads
+    else {
+      const formData = new FormData()
+      formData.append('date', newMomDate.value)
+      formData.append('agenda', newMomAgenda.value)
+      formData.append('attendees', newMomAttendees.value)
+      formData.append('created_by', authStore.user?.name || 'Admin')
+      formData.append('file', newMomFile.value)
+
+      res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/upload`, {
+        method: 'POST',
+        body: formData
+      })
+    }
+
+    if (res.ok) {
+      await fetchAllData()
+      newMomAgenda.value = ''
+      newMomAttendees.value = ''
+      newMomContent.value = ''
+      newMomFile.value = null
+      const fileInput = document.querySelector('input[type="file"]')
+      if(fileInput) fileInput.value = ''
+    } else {
+      alert("Failed to save Meeting Minutes.")
+    }
+  } catch (err) {
+    alert("Network error. Could not connect to backend.")
+  } finally {
+    isSubmittingMoM.value = false
+  }
+}
+
+const downloadMoM = async (id, filename) => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`)
+    if (!res.ok) throw new Error('File not found')
+    
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || `Meeting_Notes_${id}`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    alert("Could not download file. It may have been cleared from ephemeral storage.")
+  }
+}
+
+const removeMoM = async (id) => {
+  if (!confirm("Are you sure you want to permanently delete this meeting record?")) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/${id}`, { method: 'DELETE' })
+    if (res.ok) await fetchAllData()
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 // --- HOLIDAY LOGIC ---
 const submitHoliday = async () => {
