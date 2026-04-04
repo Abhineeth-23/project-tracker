@@ -18,7 +18,7 @@
         </div>
       </div>
 
-      <div class="flex px-2 md:px-6 space-x-1 md:space-x-2 bg-black/10 pt-2 overflow-x-auto no-scrollbar">
+      <div class="flex px-2 md:px-6 space-x-1 md:space-x-2 bg-black/20 pt-2 overflow-x-auto no-scrollbar">
         <button v-for="tab in TABS" :key="tab.id" @click="activeTab = tab.id" :class="['px-4 md:px-5 py-3 text-xs md:text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 whitespace-nowrap shrink-0', activeTab === tab.id ? 'bg-slate-50 text-blue-700' : 'text-blue-50 hover:bg-white/10']">
           <span v-html="tab.icon"></span> {{ tab.label }}
         </button>
@@ -135,7 +135,6 @@
           
           <div v-else class="space-y-4">
             <div v-for="mom in filteredMoMs" :key="mom.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all bg-white">
-              
               <div @click="toggleMoM(mom.id)" class="px-4 md:px-5 py-4 cursor-pointer hover:bg-slate-50 flex items-center justify-between group">
                 <div class="flex items-center gap-3 md:gap-4">
                   <div :class="['p-2.5 rounded-lg text-white shrink-0', mom.file_path ? 'bg-amber-500' : 'bg-blue-500']">
@@ -217,7 +216,7 @@ const authStore = useAuthStore()
 // --- TAB CONFIGURATION ---
 const activeTab = ref('daily')
 const TABS = [
-  { id: 'daily', label: 'Daily Update', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+  { id: 'daily', label: 'Update Log', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'attendance', label: 'My Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
   { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' }
@@ -276,7 +275,7 @@ onMounted(async () => {
 
     const mData = await momRes.json()
     allMoMs.value = Array.isArray(mData) ? mData : []
-    
+
     const hData = await holidaysRes.json()
     allHolidays.value = Array.isArray(hData) ? hData : []
 
