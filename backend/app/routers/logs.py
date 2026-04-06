@@ -58,3 +58,23 @@ def create_log(log: schemas.LogCreate, background_tasks: BackgroundTasks, db: Se
     background_tasks.add_task(send_to_google_sheets, payload)
     
     return new_log
+
+@router.put("/{log_id}")
+def update_log(log_id: int, log_update: schemas.LogCreate, db: Session = Depends(get_db)):
+    """Update an existing log for a previous date"""
+    db_log = db.query(models.Log).filter(models.Log.id == log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    
+    # Empty array handling
+    if not log_update.hours:
+        log_update.hours = []
+
+    # Update the fields
+    db_log.hours = log_update.hours
+    db_log.todayLog = log_update.todayLog
+    db_log.tomorrowGoal = log_update.tomorrowGoal
+    
+    db.commit()
+    db.refresh(db_log)
+    return db_log

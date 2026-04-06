@@ -29,18 +29,26 @@
       
       <div v-if="activeTab === 'daily'">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="bg-slate-50/80 px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <h2 class="text-base md:text-lg font-bold text-slate-800">Submit Progress Update</h2>
-            <span class="bg-white border border-slate-200 text-slate-600 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full">
-              {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) }}
-            </span>
+          <div class="bg-slate-50/80 px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h2 class="text-base md:text-lg font-bold text-slate-800">
+              {{ editingLogId ? 'Edit Past Update' : 'Submit Progress Update' }}
+            </h2>
+            
+            <div class="relative flex items-center group cursor-pointer w-full sm:w-auto">
+              <input 
+                type="date" 
+                v-model="selectedDate" 
+                :max="todayString"
+                class="bg-white border border-slate-300 text-slate-700 text-xs md:text-sm font-bold px-3 py-1.5 rounded-full outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer w-full"
+              />
+            </div>
           </div>
           
           <div class="p-4 md:p-6">
             <form @submit.prevent="submitLog" class="space-y-6">
               
               <div>
-                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-3">Hours Present Today</label>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-3">Hours Present on {{ selectedDateFormatted }}</label>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button 
                     v-for="slot in TIME_SLOTS" 
@@ -60,18 +68,18 @@
                 </div>
                 <h3 class="text-[10px] md:text-xs font-bold text-blue-600 uppercase mb-1.5 flex items-center gap-1.5 relative z-10">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                  Your Goal from {{ previousDate }}
+                  Goal set on {{ previousDate }}
                 </h3>
                 <p class="text-sm md:text-base text-blue-900 font-medium italic relative z-10">"{{ previousGoal }}"</p>
               </div>
               
               <div>
-                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Accomplished today</label>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Accomplished</label>
                 <textarea v-model="todayLog" rows="3" class="w-full rounded-xl border border-slate-200 p-3 md:p-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="What did you work on?"></textarea>
               </div>
               
               <div>
-                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Goals for tomorrow</label>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Goals for next time</label>
                 <textarea v-model="tomorrowGoal" rows="3" class="w-full rounded-xl border border-slate-200 p-3 md:p-4 text-sm md:text-base focus:ring-2 focus:ring-teal-500 outline-none resize-none" placeholder="What's next?"></textarea>
               </div>
               
@@ -79,8 +87,8 @@
                 {{ message }}
               </div>
               
-              <button type="submit" :disabled="isSubmitting || !isFormValid" :class="['w-full font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all duration-200 text-sm md:text-base', isSubmitting || !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300' : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 active:scale-[0.98]']">
-                {{ isSubmitting ? 'Saving...' : (!isFormValid ? 'Fill all fields to submit' : 'Submit Daily Update') }}
+              <button type="submit" :disabled="isSubmitting || !isFormValid" :class="['w-full font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all duration-200 text-sm md:text-base', isSubmitting || !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300' : (editingLogId ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 text-white')]">
+                {{ isSubmitting ? 'Saving...' : (!isFormValid ? 'Fill all fields to submit' : (editingLogId ? 'Update Existing Log' : 'Submit Daily Update')) }}
               </button>
               
             </form>
@@ -106,9 +114,9 @@
               <tr v-if="myLogs.length === 0">
                 <td colspan="3" class="p-8 text-center text-sm text-slate-500">You haven't logged any days yet.</td>
               </tr>
-              <tr v-else v-for="log in myLogs" :key="log.id" class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="p-4 font-semibold text-slate-800 text-sm whitespace-nowrap">{{ new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) }}</td>
-                <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">{{ log.hours?.length || 0 }} slots</td>
+              <tr v-else v-for="log in myLogs" :key="log.id" class="border-b border-slate-100 hover:bg-slate-50 cursor-pointer" @click="jumpToEdit(log.date)" title="Click to edit this day">
+                <td class="p-4 font-semibold text-blue-600 hover:underline text-sm whitespace-nowrap">{{ new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) }}</td>
+                <td class="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">{{ log.hours?.length || 0 }} slots</td>
                 <td class="p-4 text-xs text-slate-600 max-w-[300px] truncate" :title="log.todayLog">
                   <span v-if="log.todayLog && log.todayLog.trim().length > 0">{{ log.todayLog }}</span>
                   <span v-else class="text-slate-400 italic">Attendance only</span>
@@ -127,12 +135,10 @@
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </div>
         </div>
-        
         <div class="p-4 md:p-6">
           <div v-if="filteredMoMs.length === 0" class="border border-dashed border-slate-300 rounded-lg p-10 text-center bg-slate-50">
             <p class="text-slate-500 font-medium">No meeting records found.</p>
           </div>
-          
           <div v-else class="space-y-4">
             <div v-for="mom in filteredMoMs" :key="mom.id" class="border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all bg-white">
               <div @click="toggleMoM(mom.id)" class="px-4 md:px-5 py-4 cursor-pointer hover:bg-slate-50 flex items-center justify-between group">
@@ -148,26 +154,21 @@
                 </div>
                 <svg :class="['w-5 h-5 text-slate-400 transition-transform duration-200', expandedMoMs.includes(mom.id) ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
-
               <div v-if="expandedMoMs.includes(mom.id)" class="border-t border-slate-100 bg-slate-50 px-4 md:px-5 py-4">
                 <div class="mb-4">
                   <p class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Attendees</p>
                   <p class="text-sm text-slate-700">{{ mom.attendees || 'Not specified' }}</p>
                 </div>
-                
                 <div v-if="mom.content">
                   <p class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Meeting Notes</p>
-                  <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                    {{ mom.content }}
-                  </div>
+                  <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed" v-html="mom.content"></div>
                 </div>
-
-                <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-3">
                   <div class="flex items-center gap-3 overflow-hidden w-full">
                     <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     <span class="text-xs md:text-sm font-medium text-slate-700 truncate">{{ mom.file_name }}</span>
                   </div>
-                  <button @click="downloadMoM(mom.id, mom.file_name)" class="w-full sm:w-auto text-center bg-slate-100 hover:bg-blue-50 text-blue-600 font-bold py-1.5 px-4 rounded text-xs transition-colors shrink-0 border border-slate-200">
+                  <button @click.prevent="downloadMoM(mom.id, mom.file_name)" class="w-full sm:w-auto text-center bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shrink-0 flex items-center justify-center gap-2 shadow-sm">
                     Download File
                   </button>
                 </div>
@@ -206,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -233,20 +234,56 @@ const myLogs = ref([])
 const allMoMs = ref([])
 const allHolidays = ref([])
 
-// Form State
+// NEW: Date Picker State
+const todayString = new Date().toISOString().split('T')[0]
+const selectedDate = ref(todayString)
+const selectedDateFormatted = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+
+// NEW: Edit Mode State
+const editingLogId = ref(null)
+
 const selectedHours = ref([])
 const todayLog = ref('')
 const tomorrowGoal = ref('')
 const isSubmitting = ref(false)
 const message = ref('')
 
-// Previous Goal State
 const previousGoal = ref('')
 const previousDate = ref('')
 
-// MoM State
 const momSearchQuery = ref('')
 const expandedMoMs = ref([])
+
+// --- LOGIC: Handle Date Changes ---
+const handleDateChange = () => {
+  // 1. Check if they already logged this date
+  const existingLog = myLogs.value.find(log => log.date === selectedDate.value)
+  
+  if (existingLog) {
+    editingLogId.value = existingLog.id
+    selectedHours.value = [...(existingLog.hours || [])]
+    todayLog.value = existingLog.todayLog || ''
+    tomorrowGoal.value = existingLog.tomorrowGoal || ''
+  } else {
+    editingLogId.value = null
+    selectedHours.value = []
+    todayLog.value = ''
+    tomorrowGoal.value = ''
+  }
+
+  // 2. Fetch the goal from the most recent date strictly BEFORE the selected date
+  const pastLogs = myLogs.value.filter(log => log.date < selectedDate.value)
+  if (pastLogs.length > 0 && pastLogs[0].tomorrowGoal && pastLogs[0].tomorrowGoal.trim() !== '') {
+    previousGoal.value = pastLogs[0].tomorrowGoal
+    previousDate.value = new Date(pastLogs[0].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  } else {
+    previousGoal.value = ''
+    previousDate.value = ''
+  }
+}
+
+// Watch for date changes so we can auto-fill the form
+watch(selectedDate, handleDateChange)
 
 // --- API FETCHING ---
 onMounted(async () => {
@@ -257,22 +294,18 @@ onMounted(async () => {
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`)
     ])
     
-    // Process Logs (Filter to only THIS student's logs)
+    // Process Logs
     const rawLogs = await logsRes.json()
     if (Array.isArray(rawLogs)) {
       myLogs.value = rawLogs
         .filter(log => log.userId === authStore.user.id)
-        .sort((a, b) => new Date(b.date) - new Date(a.date)) // Newest first
-
-      // Extract Previous Goal
-      const today = new Date().toISOString().split('T')[0]
-      const pastLogs = myLogs.value.filter(log => log.date < today)
-      if (pastLogs.length > 0 && pastLogs[0].tomorrowGoal && pastLogs[0].tomorrowGoal.trim() !== '') {
-        previousGoal.value = pastLogs[0].tomorrowGoal
-        previousDate.value = new Date(pastLogs[0].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-      }
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        
+      // Trigger the date change logic immediately on load to populate today's info
+      handleDateChange()
     }
 
+    // Fixed API crash by extracting json properly without .clone() chaining
     const mData = await momRes.json()
     allMoMs.value = Array.isArray(mData) ? mData : []
 
@@ -305,8 +338,13 @@ const submitLog = async () => {
   message.value = ''
   
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`, {
-      method: 'POST',
+    const method = editingLogId.value ? 'PUT' : 'POST'
+    const url = editingLogId.value 
+      ? `${import.meta.env.VITE_API_BASE_URL}/api/logs/${editingLogId.value}`
+      : `${import.meta.env.VITE_API_BASE_URL}/api/logs`
+
+    const res = await fetch(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: authStore.user.id,
@@ -316,32 +354,38 @@ const submitLog = async () => {
         hours: selectedHours.value,
         todayLog: todayLog.value,
         tomorrowGoal: tomorrowGoal.value,
-        date: new Date().toISOString().split('T')[0]
+        date: selectedDate.value // Uses the date from the picker
       })
     })
 
     if (res.ok) {
-      message.value = 'Success! Log saved.'
-      selectedHours.value = []
-      todayLog.value = ''
-      tomorrowGoal.value = ''
+      message.value = editingLogId.value ? 'Success! Log updated.' : 'Success! Log saved.'
       setTimeout(() => message.value = '', 3000)
       
-      // Auto-refresh logs table silently
+      // Auto-refresh logs table
       const newLogRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
       const newLogs = await newLogRes.json()
       if (Array.isArray(newLogs)) {
-        myLogs.value = newLogs.filter(log => log.userId === authStore.user.id).sort((a, b) => new Date(b.date) - new Date(a.date))
+        myLogs.value = newLogs
+          .filter(log => log.userId === authStore.user.id)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
       }
     } else {
       const errorData = await res.json()
-      message.value = errorData.detail || 'Error saving log to database.'
+      message.value = errorData.detail || 'Error saving log.'
     }
   } catch (err) {
     message.value = 'Network error connecting to backend.'
   } finally {
     isSubmitting.value = false
   }
+}
+
+// Quick jump-to-edit feature from the history table
+const jumpToEdit = (dateStr) => {
+  selectedDate.value = dateStr
+  activeTab.value = 'daily'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // --- MOM LOGIC ---
@@ -363,6 +407,7 @@ const filteredMoMs = computed(() => {
   )
 })
 
+// Restored explicit download to handle missing file errors gracefully
 const downloadMoM = async (id, filename) => {
   try {
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`)
