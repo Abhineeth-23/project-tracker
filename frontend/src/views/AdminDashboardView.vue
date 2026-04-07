@@ -470,10 +470,19 @@ const fetchAllData = async () => {
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`)
     ])
     
-    allLogs.value = Array.isArray(await logsRes.json()) ? await logsRes.clone().json() : []
-    allUsers.value = Array.isArray(await usersRes.json()) ? await usersRes.clone().json() : []
-    allHolidays.value = Array.isArray(await holidaysRes.json()) ? await holidaysRes.clone().json() : []
-    allMoMs.value = Array.isArray(await momRes.json()) ? await momRes.clone().json() : []
+    // Correctly parse the JSON once per response
+    const logsData = await logsRes.json()
+    allLogs.value = Array.isArray(logsData) ? logsData : []
+    
+    const usersData = await usersRes.json()
+    allUsers.value = Array.isArray(usersData) ? usersData : []
+
+    const holidaysData = await holidaysRes.json()
+    allHolidays.value = Array.isArray(holidaysData) ? holidaysData : []
+
+    const momData = await momRes.json()
+    allMoMs.value = Array.isArray(momData) ? momData : []
+    
   } catch (err) {
     console.error("Failed to load dashboard data from API.", err)
   }
