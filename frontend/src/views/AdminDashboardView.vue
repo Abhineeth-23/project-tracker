@@ -439,12 +439,11 @@ const dynamicOrderedRolls = computed(() => {
 const formatHoursForRoll = (roll) => {
   const log = filteredLogs.value.find(l => l.rollNumber === roll)
   if (log && log.hours && log.hours.length > 0) {
+    // Sort the hours numerically just in case they were clicked out of order
     const sortedHours = [...log.hours].sort((a, b) => a - b)
-    // Changed "hours" to "hr" to represent specific slots
     return `${sortedHours.join(', ')} hr`
   }
-  // Changed fallback to match
-  return '0 hr'
+  return '0 hours' // Fallback for absent students
 }
 
 // Core State
