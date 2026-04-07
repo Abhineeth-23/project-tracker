@@ -1,7 +1,12 @@
 {
   "dependencies": {
     "pinia": "^3.0.4",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "pinia": "^2.1.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.1",
+    "@vueup/vue-quill": "^1.2.0",
+    "@tailwindcss/typography": "^0.5.10"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.27",

@@ -27,6 +27,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+      
       <div v-if="['daily', 'attendance', 'records'].includes(activeTab)" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div class="bg-white border border-slate-200 rounded-lg px-4 py-2 flex items-center shadow-sm w-full md:w-auto">
           <input type="date" v-model="selectedDate" class="outline-none text-sm font-medium text-slate-700 bg-transparent w-full">
@@ -128,7 +129,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2">
           <div v-for="roll in dynamicOrderedRolls" :key="roll" class="flex justify-between items-center py-2.5 border-b border-slate-100">
             <span class="text-sm font-mono text-slate-700 font-semibold">{{ roll }}</span>
-            <span :class="['text-xs font-bold px-2 py-1 rounded', formatHoursForRoll(roll) !== '0 hours' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400']">
+            <span :class="['text-xs font-bold px-2 py-1 rounded', formatHoursForRoll(roll) !== '0 hr' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400']">
               {{ formatHoursForRoll(roll) }}
             </span>
           </div>
@@ -286,13 +287,21 @@
                 <input type="text" v-model="newMomAttendees" placeholder="e.g. John, Sarah, Mike" class="w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none">
               </div>
               
-              <div v-if="momFormMode === 'text'">
+              <div v-if="momFormMode === 'text'" class="flex flex-col">
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Meeting Notes</label>
-                <textarea required v-model="newMomContent" rows="5" class="w-full rounded-lg border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-500 outline-none resize-none" placeholder="Enter key points and action items..."></textarea>
+                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-slate-500">
+                  <QuillEditor 
+                    theme="snow" 
+                    v-model:content="newMomContent" 
+                    contentType="html" 
+                    placeholder="Enter key points, headings, and action items..."
+                    class="min-h-[200px] text-sm"
+                  />
+                </div>
               </div>
 
               <div v-if="momFormMode === 'file'">
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Attach Document (PDF, DOCX)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Attach Document (PDF, Image)</label>
                 <input type="file" required @change="handleFileUpload" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
               </div>
 
@@ -336,25 +345,32 @@
 
                 <div v-if="expandedMoMs.includes(mom.id)" class="border-t border-slate-100 bg-slate-50 px-5 py-4">
                   <div class="mb-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Attendees</p>
+                    <p class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Attendees</p>
                     <p class="text-sm text-slate-700">{{ mom.attendees || 'Not specified' }}</p>
                   </div>
                   
                   <div v-if="mom.content">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Meeting Notes</p>
-                    <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                      {{ mom.content }}
+                    <p class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Meeting Notes</p>
+                    <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 leading-relaxed overflow-hidden">
+                      <div v-html="mom.content" class="prose prose-sm max-w-none prose-slate"></div>
                     </div>
                   </div>
 
-                  <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                      <svg class="w-6 h-6 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                      <span class="text-sm font-medium text-slate-700 truncate">{{ mom.file_name }}</span>
+                  <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-3">
+                    <div class="flex items-center gap-3 overflow-hidden w-full">
+                      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      <span class="text-xs md:text-sm font-medium text-slate-700 truncate">{{ mom.file_name }}</span>
                     </div>
-                    <button @click="downloadMoM(mom.id, mom.file_name)" class="bg-slate-100 hover:bg-blue-50 text-blue-600 font-bold py-1.5 px-4 rounded text-xs transition-colors shrink-0 border border-slate-200">
-                      Download
-                    </button>
+                    
+                    <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                      <button @click.prevent="viewMoM(mom.id)" class="w-full sm:w-auto text-center bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shrink-0 flex items-center justify-center gap-2 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        Preview File
+                      </button>
+                      <button @click="downloadMoM(mom.id, mom.file_name)" class="w-full sm:w-auto text-center bg-slate-100 hover:bg-blue-50 text-blue-600 font-bold py-2 px-4 rounded-lg text-xs transition-colors shrink-0 border border-slate-200 flex items-center justify-center gap-2">
+                        Download
+                      </button>
+                    </div>
                   </div>
                   
                   <div v-if="authStore.user?.role === 'admin'" class="mt-4 flex justify-end">
@@ -378,6 +394,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+
+// Import the Rich Text Editor
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 // --- ROUTER & STORE INITIATION ---
 const router = useRouter()
@@ -407,9 +427,6 @@ const TABS = [
 
 const AVAILABLE_TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect", "Management"]
 
-// --- NEW PHASE 1 ADDITIONS ---
-
-// 1. Rename to BASE
 const BASE_ORDERED_ROLLS = [
   "25E51M0503", "24E51A6634", "24E51A6614", "24E51A6633", 
   "24E51A6628", "24E51A6641", "24E51A6609", "24E51A6665", 
@@ -419,47 +436,20 @@ const BASE_ORDERED_ROLLS = [
   "24E51A6618", "24E51A6650", "23E51A05G4", "23E51A6673"
 ]
 
-// 2. Add the intelligent merging logic
-const dynamicOrderedRolls = computed(() => {
-  const rolls = [...BASE_ORDERED_ROLLS] // Start with your required order
-  
-  // Scan the live database of users
-  allUsers.value.forEach(user => {
-    // If we find a new user not in the list, append them to the end
-    // (We also ignore the 'ADMIN' and 'VIEWER' accounts so they don't show up in attendance)
-    if (!rolls.includes(user.rollNumber) && user.rollNumber !== 'ADMIN' && user.rollNumber !== 'VIEWER') {
-      rolls.push(user.rollNumber)
-    }
-  })
-  
-  return rolls
-})
-
-// NEW: Formats the specific hours array (e.g., "1, 3, 4, 5 hours")
-const formatHoursForRoll = (roll) => {
-  const log = filteredLogs.value.find(l => l.rollNumber === roll)
-  if (log && log.hours && log.hours.length > 0) {
-    // Sort the hours numerically just in case they were clicked out of order
-    const sortedHours = [...log.hours].sort((a, b) => a - b)
-    return `${sortedHours.join(', ')} hr`
-  }
-  return '0 hours' // Fallback for absent students
-}
-
 // Core State
 const activeTab = ref('daily')
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const allLogs = ref([])
 const allUsers = ref([])
 const allHolidays = ref([])
-const allMoMs = ref([]) // NEW: MoM Data
+const allMoMs = ref([])
 
 // Form State
 const newHolidayDate = ref('')
 const newHolidayName = ref('')
 const editingUser = ref(null)
 
-// NEW: MoM States
+// MoM States
 const momSearchQuery = ref('')
 const expandedMoMs = ref([])
 const momFormMode = ref('text')
@@ -477,22 +467,15 @@ const fetchAllData = async () => {
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`) // NEW
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`)
     ])
     
-    const logsData = await logsRes.json()
-    allLogs.value = Array.isArray(logsData) ? logsData : []
-    
-    const usersData = await usersRes.json()
-    allUsers.value = Array.isArray(usersData) ? usersData : []
-
-    const holidaysData = await holidaysRes.json()
-    allHolidays.value = Array.isArray(holidaysData) ? holidaysData : []
-
-    const momData = await momRes.json()
-    allMoMs.value = Array.isArray(momData) ? momData : [] // NEW
+    allLogs.value = Array.isArray(await logsRes.json()) ? await logsRes.clone().json() : []
+    allUsers.value = Array.isArray(await usersRes.json()) ? await usersRes.clone().json() : []
+    allHolidays.value = Array.isArray(await holidaysRes.json()) ? await holidaysRes.clone().json() : []
+    allMoMs.value = Array.isArray(await momRes.json()) ? await momRes.clone().json() : []
   } catch (err) {
-    console.error("Failed to load dashboard data from API.")
+    console.error("Failed to load dashboard data from API.", err)
   }
 }
 
@@ -525,7 +508,6 @@ const submitMoM = async () => {
   isSubmittingMoM.value = true
   try {
     let res;
-    // Handle Text Notes
     if (momFormMode.value === 'text') {
       res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/text`, {
         method: 'POST',
@@ -538,9 +520,7 @@ const submitMoM = async () => {
           created_by: authStore.user?.name || 'Admin'
         })
       })
-    } 
-    // Handle File Uploads
-    else {
+    } else {
       const formData = new FormData()
       formData.append('date', newMomDate.value)
       formData.append('agenda', newMomAgenda.value)
@@ -550,7 +530,7 @@ const submitMoM = async () => {
 
       res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/upload`, {
         method: 'POST',
-        body: formData
+        body: formData 
       })
     }
 
@@ -570,6 +550,11 @@ const submitMoM = async () => {
   } finally {
     isSubmittingMoM.value = false
   }
+}
+
+const viewMoM = (id) => {
+  const url = `${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`
+  window.open(url, '_blank')
 }
 
 const downloadMoM = async (id, filename) => {
@@ -666,12 +651,31 @@ const removeUser = async (id) => {
 }
 
 // --- LOG COMPUTEDS & HELPERS ---
+const dynamicOrderedRolls = computed(() => {
+  const rolls = [...BASE_ORDERED_ROLLS]
+  allUsers.value.forEach(user => {
+    if (!rolls.includes(user.rollNumber) && user.rollNumber !== 'ADMIN' && user.rollNumber !== 'VIEWER') {
+      rolls.push(user.rollNumber)
+    }
+  })
+  return rolls
+})
+
 const filteredLogs = computed(() => {
   const dayLogs = allLogs.value.filter(log => log.date === selectedDate.value)
   const uniqueLogsMap = new Map()
   dayLogs.forEach(log => { uniqueLogsMap.set(log.rollNumber, log) })
   return Array.from(uniqueLogsMap.values())
 })
+
+const formatHoursForRoll = (roll) => {
+  const log = filteredLogs.value.find(l => l.rollNumber === roll)
+  if (log && log.hours && log.hours.length > 0) {
+    const sortedHours = [...log.hours].sort((a, b) => a - b)
+    return `${sortedHours.join(', ')} hr`
+  }
+  return '0 hr'
+}
 
 const formattedSelectedDate = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }))
 
@@ -768,7 +772,6 @@ const generateAttendancePDF = () => {
   doc.setFontSize(18)
   doc.text(`Attendance Report - ${formattedSelectedDate.value}`, 14, 22)
 
-  // USE THE NEW FORMATTER HERE
   const attendanceData = dynamicOrderedRolls.value.map(roll => [
     roll, 
     formatHoursForRoll(roll)
@@ -790,7 +793,6 @@ const generateAttendancePDF = () => {
 const copyAttendance = () => {
   let text = `Attendance for ${formattedSelectedDate.value}\n\n`
   
-  // USE THE NEW FORMATTER HERE
   dynamicOrderedRolls.value.forEach(roll => {
     text += `${roll} - ${formatHoursForRoll(roll)}\n`
   })
