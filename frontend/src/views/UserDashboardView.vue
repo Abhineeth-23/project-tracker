@@ -161,15 +161,19 @@
                 </div>
                 <div v-if="mom.content">
                   <p class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Meeting Notes</p>
-                  <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed" v-html="mom.content"></div>
+                  <div class="bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 leading-relaxed overflow-hidden">
+                    <div v-html="mom.content" class="prose prose-sm max-w-none prose-slate"></div>
+                  </div>
                 </div>
+
                 <div v-if="mom.file_path" class="bg-white border border-slate-200 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-3">
                   <div class="flex items-center gap-3 overflow-hidden w-full">
                     <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     <span class="text-xs md:text-sm font-medium text-slate-700 truncate">{{ mom.file_name }}</span>
                   </div>
-                  <button @click.prevent="downloadMoM(mom.id, mom.file_name)" class="w-full sm:w-auto text-center bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shrink-0 flex items-center justify-center gap-2 shadow-sm">
-                    Download File
+                  <button @click.prevent="viewMoM(mom.id)" class="w-full sm:w-auto text-center bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors shrink-0 flex items-center justify-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    Preview File
                   </button>
                 </div>
               </div>
@@ -407,24 +411,10 @@ const filteredMoMs = computed(() => {
   )
 })
 
-// Restored explicit download to handle missing file errors gracefully
-const downloadMoM = async (id, filename) => {
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`)
-    if (!res.ok) throw new Error('File not found')
-    
-    const blob = await res.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename || `Meeting_Notes_${id}`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    alert("Could not download file. It may have been cleared from ephemeral storage.")
-  }
+// NEW PREVIEW FUNCTION
+const viewMoM = (id) => {
+  const url = `${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`
+  window.open(url, '_blank')
 }
 
 const handleLogout = () => {
