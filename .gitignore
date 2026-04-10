@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 node_modules
-.env
+backend\.env
 backend\app\__pycache__
 reports
 misc
