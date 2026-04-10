@@ -60,15 +60,18 @@ def create_mom_upload(
     return db_mom
 
 @router.get("/download/{mom_id}")
-def download_mom(mom_id: int, db: Session = Depends(get_db)):
-    from fastapi.responses import FileResponse
+def download_mom_file(mom_id: int, db: Session = Depends(get_db)):
+    """Download or preview an uploaded MoM file"""
     mom = db.query(models.MoM).filter(models.MoM.id == mom_id).first()
-    if not mom or not mom.file_path:
+    if not mom or not mom.file_path or not os.path.exists(mom.file_path):
         raise HTTPException(status_code=404, detail="File not found")
-    if not os.path.exists(mom.file_path):
-        raise HTTPException(status_code=404, detail="File missing on server")
     
-    return FileResponse(path=mom.file_path, filename=mom.file_name)
+    # NEW: Added content_disposition_type="inline"
+    return FileResponse(
+        path=mom.file_path, 
+        filename=mom.file_name,
+        content_disposition_type="inline" 
+    )
 
 @router.delete("/{mom_id}")
 def delete_mom(mom_id: int, db: Session = Depends(get_db)):
