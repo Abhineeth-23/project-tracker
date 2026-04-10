@@ -6,3 +6,4 @@ python-dotenv
 passlib[bcrypt]
 requests
 python-multipart
+supabase==2.3.4
