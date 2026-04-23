@@ -238,12 +238,12 @@ const myLogs = ref([])
 const allMoMs = ref([])
 const allHolidays = ref([])
 
-// NEW: Date Picker State
+// Date Picker State
 const todayString = new Date().toISOString().split('T')[0]
 const selectedDate = ref(todayString)
 const selectedDateFormatted = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
 
-// NEW: Edit Mode State
+// Edit Mode State
 const editingLogId = ref(null)
 
 const selectedHours = ref([])
@@ -258,9 +258,25 @@ const previousDate = ref('')
 const momSearchQuery = ref('')
 const expandedMoMs = ref([])
 
+// --- HELPER: Process User Logs ---
+const processUserLogs = (rawLogs) => {
+  // 1. Filter firmly by Roll Number (ignores mismatched user IDs)
+  const userLogs = rawLogs.filter(log => log.rollNumber === authStore.user.rollNumber)
+  
+  // 2. Deduplicate dates (keeps the highest ID / most recent edit if there are multiple entries)
+  const uniqueLogsMap = new Map()
+  userLogs.forEach(log => {
+    if (!uniqueLogsMap.has(log.date) || uniqueLogsMap.get(log.date).id < log.id) {
+      uniqueLogsMap.set(log.date, log)
+    }
+  })
+  
+  // 3. Sort newest first
+  return Array.from(uniqueLogsMap.values()).sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
 // --- LOGIC: Handle Date Changes ---
 const handleDateChange = () => {
-  // 1. Check if they already logged this date
   const existingLog = myLogs.value.find(log => log.date === selectedDate.value)
   
   if (existingLog) {
@@ -275,7 +291,6 @@ const handleDateChange = () => {
     tomorrowGoal.value = ''
   }
 
-  // 2. Fetch the goal from the most recent date strictly BEFORE the selected date
   const pastLogs = myLogs.value.filter(log => log.date < selectedDate.value)
   if (pastLogs.length > 0 && pastLogs[0].tomorrowGoal && pastLogs[0].tomorrowGoal.trim() !== '') {
     previousGoal.value = pastLogs[0].tomorrowGoal
@@ -286,7 +301,6 @@ const handleDateChange = () => {
   }
 }
 
-// Watch for date changes so we can auto-fill the form
 watch(selectedDate, handleDateChange)
 
 // --- API FETCHING ---
@@ -298,18 +312,13 @@ onMounted(async () => {
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`)
     ])
     
-    // Process Logs
+    // Process Logs using the new robust helper
     const rawLogs = await logsRes.json()
     if (Array.isArray(rawLogs)) {
-      myLogs.value = rawLogs
-        .filter(log => log.userId === authStore.user.id)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        
-      // Trigger the date change logic immediately on load to populate today's info
+      myLogs.value = processUserLogs(rawLogs)
       handleDateChange()
     }
 
-    // Fixed API crash by extracting json properly without .clone() chaining
     const mData = await momRes.json()
     allMoMs.value = Array.isArray(mData) ? mData : []
 
@@ -358,7 +367,7 @@ const submitLog = async () => {
         hours: selectedHours.value,
         todayLog: todayLog.value,
         tomorrowGoal: tomorrowGoal.value,
-        date: selectedDate.value // Uses the date from the picker
+        date: selectedDate.value
       })
     })
 
@@ -366,13 +375,11 @@ const submitLog = async () => {
       message.value = editingLogId.value ? 'Success! Log updated.' : 'Success! Log saved.'
       setTimeout(() => message.value = '', 3000)
       
-      // Auto-refresh logs table
+      // Auto-refresh logs table using the new robust helper
       const newLogRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
       const newLogs = await newLogRes.json()
       if (Array.isArray(newLogs)) {
-        myLogs.value = newLogs
-          .filter(log => log.userId === authStore.user.id)
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
+        myLogs.value = processUserLogs(newLogs)
       }
     } else {
       const errorData = await res.json()
@@ -385,7 +392,6 @@ const submitLog = async () => {
   }
 }
 
-// Quick jump-to-edit feature from the history table
 const jumpToEdit = (dateStr) => {
   selectedDate.value = dateStr
   activeTab.value = 'daily'
@@ -411,7 +417,6 @@ const filteredMoMs = computed(() => {
   )
 })
 
-// NEW PREVIEW FUNCTION
 const viewMoM = (id) => {
   const url = `${import.meta.env.VITE_API_BASE_URL}/api/mom/download/${id}`
   window.open(url, '_blank')
