@@ -166,6 +166,7 @@ function doPost(e) {
         if (data.action === 'holiday') {
           if (loc.target === -1) {
             sheet.appendRow([displayToday, data.holidayName, data.holidayName]);
+            SpreadsheetApp.flush();
           } else { 
             sheet.getRange(loc.target, 2).setValue(data.holidayName); 
             sheet.getRange(loc.target, 3).setValue(data.holidayName); 
@@ -191,6 +192,7 @@ function doPost(e) {
       
       if (loc.target === -1 && data.logs.length > 0) {
         sheet.appendRow([displayToday]);
+        SpreadsheetApp.flush();
         loc = getRowIndexes(sheet, todayStr); // Refresh to get the new row
       }
       
@@ -236,6 +238,7 @@ function doPost(e) {
           var tmwLoc = getRowIndexes(sheet, tomorrowStr);
           if (tmwLoc.target === -1) {
              sheet.appendRow([displayTomorrow]);
+             SpreadsheetApp.flush();
              tmwLoc = getRowIndexes(sheet, tomorrowStr);
           }
           sheet.getRange(tmwLoc.target, 2).setValue(combinedGoal);
@@ -259,10 +262,12 @@ function doPost(e) {
       // Create rows if they are missing
       if (todayLoc.target === -1) {
         sheet.appendRow([displayToday]);
+        SpreadsheetApp.flush();
         todayLoc = getRowIndexes(sheet, todayStr);
       }
       if (tomorrowLoc.target === -1) {
         sheet.appendRow([displayTomorrow]);
+        SpreadsheetApp.flush();
         tomorrowLoc = getRowIndexes(sheet, tomorrowStr);
       }
 
@@ -320,7 +325,7 @@ function createTeamSheet(ss, teamName) {
   if (sheet) return sheet;
   
   sheet = ss.insertSheet(teamName);
-  sheet.setHideGridlines(false);
+  sheet.setHasHiddenGridlines(false);
   
   // Set column widths
   sheet.setColumnWidth(1, 130); // Date
