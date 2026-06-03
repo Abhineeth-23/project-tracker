@@ -25,20 +25,26 @@ function doPost(e) {
     // ==========================================
     // HELPER: DATE PARSING (Timezone Safe)
     // ==========================================
-    var parts = data.date.split('-'); 
-    var y = parseInt(parts[0], 10);
-    var m = parseInt(parts[1], 10);
-    var d = parseInt(parts[2], 10);
+    var todayStr = data.date || ""; // "YYYY-MM-DD"
+    var displayToday = "";
+    var tomorrowStr = "";
+    var displayTomorrow = "";
     
-    var todayStr = data.date; // "YYYY-MM-DD"
-    var displayToday = String(d).padStart(2, '0') + "/" + String(m).padStart(2, '0') + "/" + y;
+    if (todayStr) {
+      var parts = todayStr.split('-'); 
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10);
+      var d = parseInt(parts[2], 10);
+      
+      displayToday = String(d).padStart(2, '0') + "/" + String(m).padStart(2, '0') + "/" + y;
 
-    // Calculate tomorrow perfectly without timezone shifting bugs
-    var daysInMonth = new Date(y, m, 0).getDate();
-    var tm_d = d + 1, tm_m = m, tm_y = y;
-    if (tm_d > daysInMonth) { tm_d = 1; tm_m++; if (tm_m > 12) { tm_m = 1; tm_y++; } }
-    var tomorrowStr = tm_y + "-" + String(tm_m).padStart(2, '0') + "-" + String(tm_d).padStart(2, '0');
-    var displayTomorrow = String(tm_d).padStart(2, '0') + "/" + String(tm_m).padStart(2, '0') + "/" + tm_y;
+      // Calculate tomorrow perfectly without timezone shifting bugs
+      var daysInMonth = new Date(y, m, 0).getDate();
+      var tm_d = d + 1, tm_m = m, tm_y = y;
+      if (tm_d > daysInMonth) { tm_d = 1; tm_m++; if (tm_m > 12) { tm_m = 1; tm_y++; } }
+      tomorrowStr = tm_y + "-" + String(tm_m).padStart(2, '0') + "-" + String(tm_d).padStart(2, '0');
+      displayTomorrow = String(tm_d).padStart(2, '0') + "/" + String(tm_m).padStart(2, '0') + "/" + tm_y;
+    }
     
     // Robust function to parse dates from the sheet into YYYY-MM-DD
     function parseSheetDate(cellVal) {

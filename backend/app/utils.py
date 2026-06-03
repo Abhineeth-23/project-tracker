@@ -16,6 +16,14 @@ def send_to_google_sheets(payload: dict):
     try:
         # Send the payload to Google
         response = requests.post(WEBHOOK_URL, json=payload, allow_redirects=True, timeout=15)
+        if response.status_code == 200:
+            try:
+                res_data = response.json()
+                if isinstance(res_data, dict) and res_data.get("status") == "error":
+                    print(f"❌ Google Sheets Script Error: {res_data.get('message')}")
+                    return
+            except Exception:
+                pass
         print(f"✅ Synced to Sheets: {payload.get('team')} on {payload.get('date')}")
     except Exception as e:
         print(f"❌ Google Sheets Sync Error: {e}")
