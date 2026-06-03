@@ -7,9 +7,13 @@
           <h1 class="text-xl md:text-2xl font-bold tracking-wide">Project Tracker</h1>
         </div>
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
-          <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 truncate max-w-[200px] sm:max-w-none flex items-center gap-1.5">
+          <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 max-w-[250px] sm:max-w-none flex items-center gap-1.5">
             <svg class="w-3 h-3 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            <span class="truncate">{{ authStore.user?.name }} ({{ authStore.user?.team }})</span>
+            <span class="truncate max-w-[80px] md:max-w-[120px]">{{ authStore.user?.name }}</span>
+            <span class="opacity-50">|</span>
+            <select :value="authStore.user?.team" @change="updateUserTeam($event.target.value)" class="bg-transparent border-none outline-none font-bold text-teal-200 cursor-pointer hover:underline text-xs md:text-sm">
+              <option v-for="team in availableTeams" :key="team" :value="team" class="text-slate-800 bg-white font-medium">{{ team }}</option>
+            </select>
           </span>
           <button @click="handleLogout" class="hover:bg-white/20 p-2 md:px-3 md:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0">
             <span class="hidden sm:inline text-sm font-bold">Logout</span>
@@ -237,6 +241,7 @@ const TIME_SLOTS = [
 const myLogs = ref([])
 const allMoMs = ref([])
 const allHolidays = ref([])
+const availableTeams = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"])
 
 // Date Picker State
 const todayString = new Date().toISOString().split('T')[0]
@@ -306,11 +311,20 @@ watch(selectedDate, handleDateChange)
 // --- API FETCHING ---
 onMounted(async () => {
   try {
-    const [logsRes, momRes, holidaysRes] = await Promise.all([
+    const [logsRes, momRes, holidaysRes, teamsRes] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`)
     ])
+    
+    // Process Teams
+    if (teamsRes.ok) {
+      const tData = await teamsRes.json()
+      if (Array.isArray(tData) && tData.length > 0) {
+        availableTeams.value = tData.map(t => t.name)
+      }
+    }
     
     // Process Logs using the new robust helper
     const rawLogs = await logsRes.json()
@@ -425,6 +439,37 @@ const viewMoM = (id) => {
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
+}
+
+const updateUserTeam = async (newTeam) => {
+  if (!authStore.user) return
+  if (newTeam === authStore.user.team) return
+  
+  if (!confirm(`Are you sure you want to change your team to "${newTeam}"?`)) {
+    return
+  }
+  
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team: newTeam })
+    })
+    
+    if (res.ok) {
+      const updatedUser = await res.json()
+      authStore.user = updatedUser
+      localStorage.setItem('trackerUser', JSON.stringify(updatedUser))
+      
+      // Auto reload local log status for date change if needed
+      handleDateChange()
+      alert(`Team successfully changed to "${newTeam}"!`)
+    } else {
+      alert("Failed to update team.")
+    }
+  } catch (err) {
+    alert("Network error. Could not update team.")
+  }
 }
 </script>
 

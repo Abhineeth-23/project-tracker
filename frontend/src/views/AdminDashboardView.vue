@@ -208,55 +208,90 @@
         </div>
       </div>
 
-      <div v-if="activeTab === 'users'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-4 md:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <h3 class="text-base md:text-lg font-bold text-slate-800">Workspace Members Registry</h3>
-          <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">{{ allUsers.length }} Total Accounts</span>
+      <div v-if="activeTab === 'users'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Manage Teams CRUD Panel (Admin Only) -->
+        <div v-if="authStore.user?.role === 'admin'" class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
+          <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            Manage Teams
+          </h3>
+          <form @submit.prevent="submitTeam" class="space-y-4 mb-6">
+            <div>
+              <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">New Team Name</label>
+              <div class="flex gap-2">
+                <input type="text" required v-model="newTeamName" placeholder="e.g. AI Devs" class="flex-1 rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+                <button type="submit" :disabled="isSubmittingTeam" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm text-sm disabled:opacity-50">
+                  Add
+                </button>
+              </div>
+            </div>
+          </form>
+          
+          <div class="space-y-2 border-t border-slate-100 pt-4">
+            <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Active Teams</label>
+            <div v-if="allTeams.length === 0" class="text-xs text-slate-400 italic">No teams registered</div>
+            <div v-else class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
+              <div v-for="team in allTeams" :key="team.id" class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm hover:bg-white transition-colors">
+                <span class="font-semibold text-slate-700">{{ team.name }}</span>
+                <button @click="removeTeam(team)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors">
+                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="overflow-x-auto no-scrollbar">
-          <table class="w-full text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr class="bg-white text-slate-500 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-200">
-                <th class="p-4 font-bold">Full Name</th>
-                <th class="p-4 font-bold">Roll Number</th>
-                <th class="p-4 font-bold">Team Assignment</th>
-                <th v-if="authStore.user?.role === 'admin'" class="p-4 font-bold text-right">Admin Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="allUsers.length === 0">
-                <td colspan="4" class="p-8 text-center text-sm text-slate-500">Loading user database...</td>
-              </tr>
-              <tr v-else v-for="user in allUsers" :key="user.id" class="border-b border-slate-100 hover:bg-slate-50">
-                <template v-if="editingUser && editingUser.id === user.id">
-                  <td class="p-3"><input type="text" v-model="editingUser.name" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
-                  <td class="p-3"><input type="text" v-model="editingUser.rollNumber" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
-                  <td class="p-3">
-                    <select v-model="editingUser.team" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white">
-                      <option v-for="team in AVAILABLE_TEAMS" :key="team" :value="team">{{ team }}</option>
-                    </select>
-                  </td>
-                  <td class="p-3 text-right space-x-2 whitespace-nowrap">
-                    <button @click="saveUserEdit" class="bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-600">Save</button>
-                    <button @click="editingUser = null" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-300">Cancel</button>
-                  </td>
-                </template>
-                
-                <template v-else>
-                  <td class="p-4 font-semibold text-slate-800 text-sm flex items-center gap-2">
-                    <span v-if="user.role === 'admin' || user.role === 'viewer'" class="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">Admin</span>
-                    <span class="truncate">{{ user.name }}</span>
-                  </td>
-                  <td class="p-4 text-sm font-mono text-slate-600">{{ user.rollNumber }}</td>
-                  <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">{{ user.team }}</td>
-                  <td v-if="authStore.user?.role === 'admin'" class="p-4 text-right whitespace-nowrap">
-                    <button @click="startEdit(user)" class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit Profile</button>
-                    <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Revoke Access</button>
-                  </td>
-                </template>
-              </tr>
-            </tbody>
-          </table>
+        
+        <!-- Workspace Members Registry Table -->
+        <div :class="[authStore.user?.role === 'admin' ? 'col-span-1 lg:col-span-2' : 'col-span-1 lg:col-span-3', 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden']">
+          <div class="p-4 md:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 class="text-base md:text-lg font-bold text-slate-800">Workspace Members Registry</h3>
+            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">{{ allUsers.length }} Total Accounts</span>
+          </div>
+          <div class="overflow-x-auto no-scrollbar">
+            <table class="w-full text-left border-collapse min-w-[500px]">
+              <thead>
+                <tr class="bg-white text-slate-500 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-200">
+                  <th class="p-4 font-bold">Full Name</th>
+                  <th class="p-4 font-bold">Roll Number</th>
+                  <th class="p-4 font-bold">Team Assignment</th>
+                  <th v-if="authStore.user?.role === 'admin'" class="p-4 font-bold text-right">Admin Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="allUsers.length === 0">
+                  <td colspan="4" class="p-8 text-center text-sm text-slate-500">Loading user database...</td>
+                </tr>
+                <tr v-else v-for="user in allUsers" :key="user.id" class="border-b border-slate-100 hover:bg-slate-50">
+                  <template v-if="editingUser && editingUser.id === user.id">
+                    <td class="p-3"><input type="text" v-model="editingUser.name" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
+                    <td class="p-3"><input type="text" v-model="editingUser.rollNumber" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
+                    <td class="p-3">
+                      <select v-model="editingUser.team" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white">
+                        <option v-for="team in AVAILABLE_TEAMS" :key="team" :value="team">{{ team }}</option>
+                      </select>
+                    </td>
+                    <td class="p-3 text-right space-x-2 whitespace-nowrap">
+                      <button @click="saveUserEdit" class="bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-600">Save</button>
+                      <button @click="editingUser = null" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-300">Cancel</button>
+                    </td>
+                  </template>
+                  
+                  <template v-else>
+                    <td class="p-4 font-semibold text-slate-800 text-sm flex items-center gap-2">
+                      <span v-if="user.role === 'admin' || user.role === 'viewer'" class="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">Admin</span>
+                      <span class="truncate">{{ user.name }}</span>
+                    </td>
+                    <td class="p-4 text-sm font-mono text-slate-600">{{ user.rollNumber }}</td>
+                    <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">{{ user.team }}</td>
+                    <td v-if="authStore.user?.role === 'admin'" class="p-4 text-right whitespace-nowrap">
+                      <button @click="startEdit(user)" class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit Profile</button>
+                      <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Revoke Access</button>
+                    </td>
+                  </template>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -425,7 +460,7 @@ const TABS = [
   { id: 'users', label: 'Users & Teams', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' }
 ]
 
-const AVAILABLE_TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect", "Management"]
+const AVAILABLE_TEAMS = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect", "Management"])
 
 const BASE_ORDERED_ROLLS = [
   "25E51M0503", "24E51A6634", "24E51A6614", "24E51A6633", 
@@ -443,10 +478,13 @@ const allLogs = ref([])
 const allUsers = ref([])
 const allHolidays = ref([])
 const allMoMs = ref([])
+const allTeams = ref([])
 
 // Form State
 const newHolidayDate = ref('')
 const newHolidayName = ref('')
+const newTeamName = ref('')
+const isSubmittingTeam = ref(false)
 const editingUser = ref(null)
 
 // MoM States
@@ -463,11 +501,12 @@ const newMomFile = ref(null)
 // --- API FETCHING ---
 const fetchAllData = async () => {
   try {
-    const [logsRes, usersRes, holidaysRes, momRes] = await Promise.all([
+    const [logsRes, usersRes, holidaysRes, momRes, teamsRes] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`)
     ])
     
     // Correctly parse the JSON once per response
@@ -482,6 +521,14 @@ const fetchAllData = async () => {
 
     const momData = await momRes.json()
     allMoMs.value = Array.isArray(momData) ? momData : []
+
+    const teamsData = await teamsRes.json()
+    if (Array.isArray(teamsData)) {
+      allTeams.value = teamsData
+      if (teamsData.length > 0) {
+        AVAILABLE_TEAMS.value = [...teamsData.map(t => t.name), "Management"]
+      }
+    }
     
   } catch (err) {
     console.error("Failed to load dashboard data from API.", err)
@@ -808,6 +855,44 @@ const copyAttendance = () => {
   
   navigator.clipboard.writeText(text)
   alert("Attendance copied to clipboard!")
+}
+
+const submitTeam = async () => {
+  if (!newTeamName.value.trim()) return
+  isSubmittingTeam.value = true
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newTeamName.value.trim() })
+    })
+    if (res.ok) {
+      newTeamName.value = ''
+      await fetchAllData()
+      alert("Team added and sheets creation triggered successfully!")
+    } else {
+      const errorData = await res.json()
+      alert(`Error: ${errorData.detail || 'Could not add team'}`)
+    }
+  } catch (err) {
+    alert("Network error. Could not connect to backend.")
+  } finally {
+    isSubmittingTeam.value = false
+  }
+}
+
+const removeTeam = async (team) => {
+  if (!confirm(`Are you sure you want to delete the team "${team.name}"? This won't delete the Google Sheet, but will remove it from the database registry.`)) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams/${team.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      await fetchAllData()
+    } else {
+      alert("Failed to delete team.")
+    }
+  } catch (err) {
+    console.error(err)
+  }
 }
 </script>
 

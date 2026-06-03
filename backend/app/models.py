@@ -48,3 +48,9 @@ class MoM(Base):
     created_by = Column(String)
     file_name = Column(String, nullable=True)
     file_path = Column(String, nullable=True)
+
+class Team(Base):
+    __tablename__ = "teams"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)

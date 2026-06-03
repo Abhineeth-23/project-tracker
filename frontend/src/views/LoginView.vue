@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -103,7 +103,7 @@ const authStore = useAuthStore()
 
 // State
 const authMode = ref('login')
-const TEAMS = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"]
+const TEAMS = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"])
 
 // Visibility Toggles
 const showLoginPass = ref(false)
@@ -116,6 +116,21 @@ const loginPass = ref('')
 const regName = ref('')
 const regRoll = ref('')
 const regTeam = ref('Digi Yatra')
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        TEAMS.value = data.map(t => t.name)
+        regTeam.value = TEAMS.value[0]
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load active teams, using fallback.", err)
+  }
+})
 const regPass = ref('')
 const adminUser = ref('')
 const adminPass = ref('')

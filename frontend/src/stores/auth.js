@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(rollNumber, password) {
     try {
       // FIX 2: Correct URL
-      const res = await fetch('https://project-tracker-nb5j.onrender.com/api/users/login', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rollNumber, password })
@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(userData) {
     try {
       // FIX 2: Correct URL
-      const res = await fetch('https://project-tracker-nb5j.onrender.com/api/users/register', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData) // FIX 3: Pass userData, not just rollNumber!
