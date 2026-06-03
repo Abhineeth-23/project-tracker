@@ -11,7 +11,8 @@
             <svg class="w-3 h-3 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="truncate max-w-[80px] md:max-w-[120px]">{{ authStore.user?.name }}</span>
             <span class="opacity-50">|</span>
-            <select :value="authStore.user?.team" @change="updateUserTeam($event.target.value)" class="bg-transparent border-none outline-none font-bold text-teal-200 cursor-pointer hover:underline text-xs md:text-sm">
+            <span v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'viewer'" class="font-bold text-teal-200 text-xs md:text-sm">{{ authStore.user?.team }}</span>
+            <select v-else :value="authStore.user?.team" @change="updateUserTeam($event.target.value)" class="bg-transparent border-none outline-none font-bold text-teal-200 cursor-pointer hover:underline text-xs md:text-sm">
               <option v-for="team in availableTeams" :key="team" :value="team" class="text-slate-800 bg-white font-medium">{{ team }}</option>
             </select>
           </span>

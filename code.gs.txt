@@ -320,7 +320,7 @@ function createTeamSheet(ss, teamName) {
   if (sheet) return sheet;
   
   sheet = ss.insertSheet(teamName);
-  sheet.setHasHiddenGridlines(false);
+  sheet.setHideGridlines(false);
   
   // Set column widths
   sheet.setColumnWidth(1, 130); // Date
