@@ -147,7 +147,7 @@
         </div>
 
         <div v-else class="space-y-8 relative before:absolute before:inset-y-0 before:left-4 md:before:left-6 before:w-0.5 before:bg-slate-200 pl-8 md:pl-12">
-          <div v-for="day in filteredFeedDays" :key="day.date" class="relative group">
+          <div v-for="day in paginatedFeedDays" :key="day.date" class="relative group">
             <div class="absolute left-[-32px] md:left-[-48px] w-6 h-6 md:w-8 md:h-8 rounded-full border-4 border-slate-50 bg-gradient-to-tr from-teal-500 to-blue-500 shadow-sm z-10 flex items-center justify-center text-white text-[10px] font-bold">
               ✓
             </div>
@@ -204,6 +204,33 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="filteredFeedDays.length > feedPageSize" class="mt-8 flex justify-center">
+          <div class="inline-flex items-center justify-center bg-slate-800 text-white rounded-xl border border-slate-700 shadow-md p-1 font-mono text-sm">
+            <button 
+              type="button" 
+              @click="prevPage" 
+              :disabled="feedCurrentPage === 1" 
+              class="px-3 py-1.5 rounded-lg hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold cursor-pointer"
+            >
+              &lt;
+            </button>
+            
+            <span class="px-4 py-1.5 font-bold tracking-wide">
+              {{ pageStartIdx }} - {{ pageEndIdx }} of {{ filteredFeedDays.length }}
+            </span>
+            
+            <button 
+              type="button" 
+              @click="nextPage" 
+              :disabled="feedCurrentPage * feedPageSize >= filteredFeedDays.length" 
+              class="px-3 py-1.5 rounded-lg hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold cursor-pointer"
+            >
+              &gt;
+            </button>
           </div>
         </div>
       </div>
@@ -551,7 +578,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import jsPDF from 'jspdf'
@@ -1072,6 +1099,43 @@ const submitCreateStudent = async () => {
   }
 }
 
+const feedCurrentPage = ref(1)
+const feedPageSize = 5
+
+// Watch feed filters to reset page to 1 on search or date filter change
+watch([feedFilterDate, feedSearchQuery], () => {
+  feedCurrentPage.value = 1
+})
+
+const pageStartIdx = computed(() => {
+  if (filteredFeedDays.value.length === 0) return 0
+  return (feedCurrentPage.value - 1) * feedPageSize + 1
+})
+
+const pageEndIdx = computed(() => {
+  return Math.min(feedCurrentPage.value * feedPageSize, filteredFeedDays.value.length)
+})
+
+const paginatedFeedDays = computed(() => {
+  const start = (feedCurrentPage.value - 1) * feedPageSize
+  const end = start + feedPageSize
+  return filteredFeedDays.value.slice(start, end)
+})
+
+const prevPage = () => {
+  if (feedCurrentPage.value > 1) {
+    feedCurrentPage.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const nextPage = () => {
+  if (feedCurrentPage.value * feedPageSize < filteredFeedDays.value.length) {
+    feedCurrentPage.value++
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 const filteredFeedDays = computed(() => {
   let logs = allLogs.value
   
@@ -1117,10 +1181,6 @@ const filteredFeedDays = computed(() => {
   })
   
   days.sort((a, b) => new Date(b.date) - new Date(a.date))
-  
-  if (!feedFilterDate.value && !feedSearchQuery.value) {
-    return days.slice(0, 25)
-  }
   return days
 })
 
