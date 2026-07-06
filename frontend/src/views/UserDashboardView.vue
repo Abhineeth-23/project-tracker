@@ -101,7 +101,6 @@
             </form>
           </div>
         </div>
-        </div>
       </div>
 
       <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

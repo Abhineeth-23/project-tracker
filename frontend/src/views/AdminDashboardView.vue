@@ -836,7 +836,7 @@ const saveUserEdit = async () => {
 }
 
 const removeUser = async (id) => {
-  if (!confirm("WARNING: Are you sure you want to permanently delete this user? This cannot be undone.")) return
+  if (!confirm("⚠️ DANGER: Are you sure you want to permanently remove this student from the project? This will delete their account and cannot be undone.")) return
   try {
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${id}`, { method: 'DELETE' })
     if (res.ok) await fetchAllData()
@@ -1034,15 +1034,6 @@ const removeTeam = async (team) => {
   }
 }
 
-const removeUser = async (id) => {
-  if (!confirm("⚠️ DANGER: Are you sure you want to permanently remove this student from the project? This will delete their account and cannot be undone.")) return
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${id}`, { method: 'DELETE' })
-    if (res.ok) await fetchAllData()
-  } catch (err) {
-    console.error(err)
-  }
-}
 
 const submitCreateStudent = async () => {
   if (!newStudentName.value.trim() || !newStudentRoll.value.trim() || !newStudentPassword.value.trim()) {
