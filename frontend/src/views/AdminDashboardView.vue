@@ -120,6 +120,94 @@
         </div>
       </div>
 
+      <!-- Chronological Daily Progress Feed -->
+      <div v-if="activeTab === 'progress'" class="space-y-6">
+        <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="w-full md:w-auto">
+            <h3 class="text-lg font-bold text-slate-800">Daily Workspace Progress</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Explore progress reports across all project teams</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch sm:items-center">
+            <div class="bg-slate-100 rounded-xl px-3 py-2 flex items-center border border-slate-200">
+              <span class="text-xs font-bold text-slate-500 mr-2 uppercase">Date:</span>
+              <input type="date" v-model="feedFilterDate" class="outline-none text-xs font-bold text-slate-700 bg-transparent cursor-pointer">
+              <button v-if="feedFilterDate" @click="feedFilterDate = ''" class="ml-2 text-slate-400 hover:text-slate-600 text-xs font-bold font-mono">×</button>
+            </div>
+            <div class="relative flex-1 sm:flex-none">
+              <input type="text" v-model="feedSearchQuery" placeholder="Search logs/names..." class="w-full sm:w-56 rounded-xl border border-slate-200 py-2 pl-8 pr-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filteredFeedDays.length === 0" class="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
+          <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <p class="text-sm font-semibold text-slate-500">No matching progress updates found.</p>
+        </div>
+
+        <div v-else class="space-y-8 relative before:absolute before:inset-y-0 before:left-4 md:before:left-6 before:w-0.5 before:bg-slate-200 pl-8 md:pl-12">
+          <div v-for="day in filteredFeedDays" :key="day.date" class="relative group">
+            <div class="absolute left-[-32px] md:left-[-48px] w-6 h-6 md:w-8 md:h-8 rounded-full border-4 border-slate-50 bg-gradient-to-tr from-teal-500 to-blue-500 shadow-sm z-10 flex items-center justify-center text-white text-[10px] font-bold">
+              ✓
+            </div>
+            
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h4 class="font-extrabold text-slate-800 text-sm md:text-base capitalize">
+                    {{ formatFeedDate(day.date) }}
+                  </h4>
+                  <p class="text-[10px] text-teal-600 font-bold uppercase tracking-wider mt-0.5">
+                    {{ day.date }}
+                  </p>
+                </div>
+                <span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded border border-slate-200">
+                  {{ day.totalHours }} hrs logged
+                </span>
+              </div>
+
+              <div class="space-y-6">
+                <div v-for="(members, team) in day.teams" :key="team" class="border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-slate-50/50">
+                  <div class="bg-teal-50 border-b border-teal-100/50 px-4 py-2 flex justify-between items-center">
+                    <span class="text-teal-900 font-extrabold text-xs md:text-sm tracking-wide flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                      {{ team || 'Unassigned' }}
+                    </span>
+                    <span class="text-[10px] font-bold text-teal-600 bg-white border border-teal-100 px-2 py-0.5 rounded">
+                      {{ members.length }} Updates
+                    </span>
+                  </div>
+                  
+                  <div class="p-3 divide-y divide-slate-100 bg-white">
+                    <div v-for="member in members" :key="member.id" class="py-3 first:pt-0 last:pb-0">
+                      <div class="flex justify-between items-start gap-2 mb-1">
+                        <span class="text-xs font-bold text-slate-700">
+                          {{ member.name }}
+                          <span class="font-mono text-[10px] text-slate-400 font-normal ml-1">({{ member.rollNumber }})</span>
+                        </span>
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
+                          {{ member.hours?.length || 0 }} slots
+                        </span>
+                      </div>
+                      
+                      <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-2.5 border border-slate-100 font-medium">
+                        {{ member.todayLog || 'Attendance only' }}
+                      </p>
+                      
+                      <p v-if="member.tomorrowGoal" class="text-[10px] text-teal-700 mt-1.5 flex items-center gap-1">
+                        <strong class="uppercase text-[9px] text-teal-500 font-black shrink-0">Next Goal:</strong>
+                        <span class="italic font-medium">"{{ member.tomorrowGoal }}"</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-8">
         <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -209,35 +297,70 @@
       </div>
 
       <div v-if="activeTab === 'users'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Manage Teams CRUD Panel (Admin Only) -->
-        <div v-if="authStore.user?.role === 'admin'" class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
-          <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            Manage Teams
-          </h3>
-          <form @submit.prevent="submitTeam" class="space-y-4 mb-6">
-            <div>
-              <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">New Team Name</label>
-              <div class="flex gap-2">
-                <input type="text" required v-model="newTeamName" placeholder="e.g. AI Devs" class="flex-1 rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
-                <button type="submit" :disabled="isSubmittingTeam" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm text-sm disabled:opacity-50">
-                  Add
-                </button>
+        <!-- Manage Teams & Add Student CRUD Panel (Admin Only) -->
+        <div v-if="authStore.user?.role === 'admin'" class="col-span-1 space-y-6">
+          <!-- Manage Teams -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
+            <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              Manage Teams
+            </h3>
+            <form @submit.prevent="submitTeam" class="space-y-4 mb-6">
+              <div>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">New Team Name</label>
+                <div class="flex gap-2">
+                  <input type="text" required v-model="newTeamName" placeholder="e.g. AI Devs" class="flex-1 rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+                  <button type="submit" :disabled="isSubmittingTeam" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm text-sm disabled:opacity-50">
+                    Add
+                  </button>
+                </div>
+              </div>
+            </form>
+            
+            <div class="space-y-2 border-t border-slate-100 pt-4">
+              <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Active Teams</label>
+              <div v-if="allTeams.length === 0" class="text-xs text-slate-400 italic">No teams registered</div>
+              <div v-else class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
+                <div v-for="team in allTeams" :key="team.id" class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm hover:bg-white transition-colors">
+                  <span class="font-semibold text-slate-700">{{ team.name }}</span>
+                  <button @click="removeTeam(team)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
               </div>
             </div>
-          </form>
-          
-          <div class="space-y-2 border-t border-slate-100 pt-4">
-            <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Active Teams</label>
-            <div v-if="allTeams.length === 0" class="text-xs text-slate-400 italic">No teams registered</div>
-            <div v-else class="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
-              <div v-for="team in allTeams" :key="team.id" class="flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-sm hover:bg-white transition-colors">
-                <span class="font-semibold text-slate-700">{{ team.name }}</span>
-                <button @click="removeTeam(team)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors">
-                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
+          </div>
+
+          <!-- Add New Student Panel -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
+            <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
+              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+              Add New Student
+            </h3>
+            <form @submit.prevent="submitCreateStudent" class="space-y-4">
+              <div>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Student Name</label>
+                <input type="text" required v-model="newStudentName" placeholder="e.g. John Doe" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
               </div>
-            </div>
+              <div>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Roll Number</label>
+                <input type="text" required v-model="newStudentRoll" placeholder="e.g. 24E51A6634" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Initial Team</label>
+                <select v-model="newStudentTeam" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none bg-white">
+                  <option value="">Unassigned (Assign Later)</option>
+                  <option v-for="team in allTeams" :key="team.id" :value="team.name">{{ team.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Password</label>
+                <input type="text" required v-model="newStudentPassword" placeholder="Password" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+              </div>
+              <button type="submit" :disabled="isSubmittingStudent" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-sm disabled:opacity-50">
+                Create Student
+              </button>
+            </form>
           </div>
         </div>
         
@@ -267,7 +390,8 @@
                     <td class="p-3"><input type="text" v-model="editingUser.rollNumber" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500"></td>
                     <td class="p-3">
                       <select v-model="editingUser.team" class="w-full border rounded px-2 py-1 text-sm outline-none focus:border-blue-500 bg-white">
-                        <option v-for="team in AVAILABLE_TEAMS" :key="team" :value="team">{{ team }}</option>
+                        <option value="">Unassigned</option>
+                        <option v-for="team in AVAILABLE_TEAMS.filter(t => t !== 'Management')" :key="team" :value="team">{{ team }}</option>
                       </select>
                     </td>
                     <td class="p-3 text-right space-x-2 whitespace-nowrap">
@@ -282,10 +406,13 @@
                       <span class="truncate">{{ user.name }}</span>
                     </td>
                     <td class="p-4 text-sm font-mono text-slate-600">{{ user.rollNumber }}</td>
-                    <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">{{ user.team }}</td>
+                    <td class="p-4 text-sm font-medium text-blue-700 whitespace-nowrap">
+                      <span v-if="user.team" class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-blue-100">{{ user.team }}</span>
+                      <span v-else class="text-slate-400 italic text-xs">Unassigned</span>
+                    </td>
                     <td v-if="authStore.user?.role === 'admin'" class="p-4 text-right whitespace-nowrap">
                       <button @click="startEdit(user)" class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit Profile</button>
-                      <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Revoke Access</button>
+                      <button @click="removeUser(user.id)" class="text-red-600 hover:underline text-xs font-bold">Remove Student</button>
                     </td>
                   </template>
                 </tr>
@@ -453,6 +580,7 @@ const TIME_SLOTS = [
 
 const TABS = [
   { id: 'daily', label: 'Daily Report', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+  { id: 'progress', label: 'Daily Progress', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
   { id: 'attendance', label: 'Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
   { id: 'records', label: 'Records', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>' },
   { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
@@ -490,6 +618,17 @@ const editingUser = ref(null)
 // MoM States
 const momSearchQuery = ref('')
 const expandedMoMs = ref([])
+
+// Progress Feed States
+const feedFilterDate = ref('')
+const feedSearchQuery = ref('')
+
+// Add Student States
+const newStudentName = ref('')
+const newStudentRoll = ref('')
+const newStudentTeam = ref('')
+const newStudentPassword = ref('Student@123')
+const isSubmittingStudent = ref(false)
 const momFormMode = ref('text')
 const isSubmittingMoM = ref(false)
 const newMomDate = ref(new Date().toISOString().split('T')[0])
@@ -882,7 +1021,7 @@ const submitTeam = async () => {
 }
 
 const removeTeam = async (team) => {
-  if (!confirm(`Are you sure you want to delete the team "${team.name}"? This won't delete the Google Sheet, but will remove it from the database registry.`)) return
+  if (!confirm(`⚠️ CRITICAL WARNING: Are you sure you want to permanently delete the team "${team.name}"? This action cannot be undone.`)) return
   try {
     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams/${team.id}`, { method: 'DELETE' })
     if (res.ok) {
@@ -892,6 +1031,122 @@ const removeTeam = async (team) => {
     }
   } catch (err) {
     console.error(err)
+  }
+}
+
+const removeUser = async (id) => {
+  if (!confirm("⚠️ DANGER: Are you sure you want to permanently remove this student from the project? This will delete their account and cannot be undone.")) return
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${id}`, { method: 'DELETE' })
+    if (res.ok) await fetchAllData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+const submitCreateStudent = async () => {
+  if (!newStudentName.value.trim() || !newStudentRoll.value.trim() || !newStudentPassword.value.trim()) {
+    alert("Please fill all required student fields.")
+    return
+  }
+  
+  isSubmittingStudent.value = true
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/admin-create-student`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newStudentName.value.trim(),
+        rollNumber: newStudentRoll.value.trim(),
+        team: newStudentTeam.value,
+        password: newStudentPassword.value.trim()
+      })
+    })
+    
+    if (res.ok) {
+      newStudentName.value = ''
+      newStudentRoll.value = ''
+      newStudentTeam.value = ''
+      newStudentPassword.value = 'Student@123'
+      await fetchAllData()
+      alert("Student created successfully!")
+    } else {
+      const errData = await res.json()
+      alert(`Error: ${errData.detail || 'Could not create student.'}`)
+    }
+  } catch (err) {
+    alert("Network error. Could not connect to backend.")
+  } finally {
+    isSubmittingStudent.value = false
+  }
+}
+
+const filteredFeedDays = computed(() => {
+  let logs = allLogs.value
+  
+  if (feedFilterDate.value) {
+    logs = logs.filter(log => log.date === feedFilterDate.value)
+  }
+  
+  if (feedSearchQuery.value) {
+    const q = feedSearchQuery.value.toLowerCase()
+    logs = logs.filter(log => 
+      (log.name && log.name.toLowerCase().includes(q)) ||
+      (log.rollNumber && log.rollNumber.toLowerCase().includes(q)) ||
+      (log.team && log.team.toLowerCase().includes(q)) ||
+      (log.todayLog && log.todayLog.toLowerCase().includes(q)) ||
+      (log.tomorrowGoal && log.tomorrowGoal.toLowerCase().includes(q))
+    )
+  }
+  
+  const dateGroups = {}
+  logs.forEach(log => {
+    if (!dateGroups[log.date]) {
+      dateGroups[log.date] = []
+    }
+    dateGroups[log.date].push(log)
+  })
+  
+  const days = Object.entries(dateGroups).map(([date, dayLogs]) => {
+    const teamGroups = {}
+    let dayHours = 0
+    dayLogs.forEach(log => {
+      if (!teamGroups[log.team]) {
+        teamGroups[log.team] = []
+      }
+      teamGroups[log.team].push(log)
+      dayHours += (log.hours?.length || 0)
+    })
+    
+    return {
+      date,
+      totalHours: dayHours,
+      teams: teamGroups
+    }
+  })
+  
+  days.sort((a, b) => new Date(b.date) - new Date(a.date))
+  
+  if (!feedFilterDate.value && !feedSearchQuery.value) {
+    return days.slice(0, 25)
+  }
+  return days
+})
+
+const formatFeedDate = (dateStr) => {
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  const formatOptions = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today'
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday'
+  } else {
+    return date.toLocaleDateString('en-US', formatOptions)
   }
 }
 </script>

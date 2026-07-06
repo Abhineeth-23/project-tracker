@@ -4,7 +4,7 @@ from typing import List, Optional
 class UserCreate(BaseModel):
     name: str
     rollNumber: str
-    team: str
+    team: Optional[str] = ""
     password: str
 
 class UserLogin(BaseModel):
@@ -15,7 +15,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     rollNumber: str
-    team: str
+    team: Optional[str] = ""
     role: str
     
     model_config = {"from_attributes": True} 

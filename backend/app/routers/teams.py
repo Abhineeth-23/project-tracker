@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
-from ..utils import send_to_google_sheets
 from typing import List
 
 router = APIRouter(prefix="/api/teams", tags=["Teams"])
@@ -12,7 +11,7 @@ def get_teams(db: Session = Depends(get_db)):
     return db.query(models.Team).order_by(models.Team.name.asc()).all()
 
 @router.post("/", response_model=schemas.TeamResponse)
-def create_team(team_data: schemas.TeamCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def create_team(team_data: schemas.TeamCreate, db: Session = Depends(get_db)):
     cleaned_name = team_data.name.strip()
     if not cleaned_name:
         raise HTTPException(status_code=400, detail="Team name cannot be empty")
@@ -25,13 +24,6 @@ def create_team(team_data: schemas.TeamCreate, background_tasks: BackgroundTasks
     db.add(new_team)
     db.commit()
     db.refresh(new_team)
-    
-    # Trigger sheets webhook to create team sheet
-    payload = {
-        "action": "create_team",
-        "team": cleaned_name
-    }
-    background_tasks.add_task(send_to_google_sheets, payload)
     
     return new_team
 

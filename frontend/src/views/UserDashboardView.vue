@@ -11,9 +11,7 @@
             <svg class="w-3 h-3 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="truncate max-w-[80px] md:max-w-[120px]">{{ authStore.user?.name }}</span>
             <span class="opacity-50">|</span>
-            <select :value="authStore.user?.team" @change="updateUserTeam($event.target.value)" class="bg-transparent border-none outline-none font-bold text-teal-200 cursor-pointer hover:underline text-xs md:text-sm">
-              <option v-for="team in availableTeams" :key="team" :value="team" class="text-slate-800 bg-white font-medium">{{ team }}</option>
-            </select>
+            <span class="font-bold text-teal-200 text-xs md:text-sm">{{ authStore.user?.team || 'Unassigned' }}</span>
           </span>
           <button @click="handleLogout" class="hover:bg-white/20 p-2 md:px-3 md:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0">
             <span class="hidden sm:inline text-sm font-bold">Logout</span>
@@ -32,7 +30,12 @@
     <main class="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
       
       <div v-if="activeTab === 'daily'">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div v-if="!authStore.user?.team" class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center shadow-sm">
+          <svg class="w-12 h-12 text-amber-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <h3 class="text-base font-bold text-amber-800 mb-1">Team Assignment Pending</h3>
+          <p class="text-sm text-amber-700">You are registered successfully! However, you have not been assigned to any project team yet. Please contact the CDC Admin to assign your team to start logging daily progress.</p>
+        </div>
+        <div v-else class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="bg-slate-50/80 px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <h2 class="text-base md:text-lg font-bold text-slate-800">
               {{ editingLogId ? 'Edit Past Update' : 'Submit Progress Update' }}
@@ -97,6 +100,7 @@
               
             </form>
           </div>
+        </div>
         </div>
       </div>
 
@@ -186,6 +190,94 @@
         </div>
       </div>
 
+      <!-- Chronological Daily Progress Feed -->
+      <div v-if="activeTab === 'progress'" class="space-y-6">
+        <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="w-full md:w-auto">
+            <h3 class="text-lg font-bold text-slate-800">Daily Workspace Progress</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Explore progress reports across all project teams</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch sm:items-center">
+            <div class="bg-slate-100 rounded-xl px-3 py-2 flex items-center border border-slate-200">
+              <span class="text-xs font-bold text-slate-500 mr-2 uppercase">Date:</span>
+              <input type="date" v-model="feedFilterDate" class="outline-none text-xs font-bold text-slate-700 bg-transparent cursor-pointer">
+              <button v-if="feedFilterDate" @click="feedFilterDate = ''" class="ml-2 text-slate-400 hover:text-slate-600 text-xs font-bold font-mono">×</button>
+            </div>
+            <div class="relative flex-1 sm:flex-none">
+              <input type="text" v-model="feedSearchQuery" placeholder="Search logs/names..." class="w-full sm:w-56 rounded-xl border border-slate-200 py-2 pl-8 pr-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filteredFeedDays.length === 0" class="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
+          <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <p class="text-sm font-semibold text-slate-500">No matching progress updates found.</p>
+        </div>
+
+        <div v-else class="space-y-8 relative before:absolute before:inset-y-0 before:left-4 md:before:left-6 before:w-0.5 before:bg-slate-200 pl-8 md:pl-12">
+          <div v-for="day in filteredFeedDays" :key="day.date" class="relative group">
+            <div class="absolute left-[-32px] md:left-[-48px] w-6 h-6 md:w-8 md:h-8 rounded-full border-4 border-slate-50 bg-gradient-to-tr from-teal-500 to-blue-500 shadow-sm z-10 flex items-center justify-center text-white text-[10px] font-bold">
+              ✓
+            </div>
+            
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h4 class="font-extrabold text-slate-800 text-sm md:text-base capitalize">
+                    {{ formatFeedDate(day.date) }}
+                  </h4>
+                  <p class="text-[10px] text-teal-600 font-bold uppercase tracking-wider mt-0.5">
+                    {{ day.date }}
+                  </p>
+                </div>
+                <span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded border border-slate-200">
+                  {{ day.totalHours }} hrs logged
+                </span>
+              </div>
+
+              <div class="space-y-6">
+                <div v-for="(members, team) in day.teams" :key="team" class="border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-slate-50/50">
+                  <div class="bg-teal-50 border-b border-teal-100/50 px-4 py-2 flex justify-between items-center">
+                    <span class="text-teal-900 font-extrabold text-xs md:text-sm tracking-wide flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                      {{ team || 'Unassigned' }}
+                    </span>
+                    <span class="text-[10px] font-bold text-teal-600 bg-white border border-teal-100 px-2 py-0.5 rounded">
+                      {{ members.length }} Updates
+                    </span>
+                  </div>
+                  
+                  <div class="p-3 divide-y divide-slate-100 bg-white">
+                    <div v-for="member in members" :key="member.id" class="py-3 first:pt-0 last:pb-0">
+                      <div class="flex justify-between items-start gap-2 mb-1">
+                        <span class="text-xs font-bold text-slate-700">
+                          {{ member.name }}
+                          <span class="font-mono text-[10px] text-slate-400 font-normal ml-1">({{ member.rollNumber }})</span>
+                        </span>
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
+                          {{ member.hours?.length || 0 }} slots
+                        </span>
+                      </div>
+                      
+                      <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-2.5 border border-slate-100 font-medium">
+                        {{ member.todayLog || 'Attendance only' }}
+                      </p>
+                      
+                      <p v-if="member.tomorrowGoal" class="text-[10px] text-teal-700 mt-1.5 flex items-center gap-1">
+                        <strong class="uppercase text-[9px] text-teal-500 font-black shrink-0">Next Goal:</strong>
+                        <span class="italic font-medium">"{{ member.tomorrowGoal }}"</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'holidays'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-50 px-4 md:px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h3 class="text-base md:text-lg font-bold text-slate-800">Declared Holidays</h3>
@@ -226,6 +318,7 @@ const authStore = useAuthStore()
 const activeTab = ref('daily')
 const TABS = [
   { id: 'daily', label: 'Update Log', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+  { id: 'progress', label: 'Daily Progress', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
   { id: 'attendance', label: 'My Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
   { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' }
@@ -239,9 +332,13 @@ const TIME_SLOTS = [
 
 // --- STATE ---
 const myLogs = ref([])
+const allLogs = ref([])
 const allMoMs = ref([])
 const allHolidays = ref([])
 const availableTeams = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"])
+
+const feedFilterDate = ref('')
+const feedSearchQuery = ref('')
 
 // Date Picker State
 const todayString = new Date().toISOString().split('T')[0]
@@ -329,6 +426,7 @@ onMounted(async () => {
     // Process Logs using the new robust helper
     const rawLogs = await logsRes.json()
     if (Array.isArray(rawLogs)) {
+      allLogs.value = rawLogs
       myLogs.value = processUserLogs(rawLogs)
       handleDateChange()
     }
@@ -393,6 +491,7 @@ const submitLog = async () => {
       const newLogRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
       const newLogs = await newLogRes.json()
       if (Array.isArray(newLogs)) {
+        allLogs.value = newLogs
         myLogs.value = processUserLogs(newLogs)
       }
     } else {
@@ -441,34 +540,72 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-const updateUserTeam = async (newTeam) => {
-  if (!authStore.user) return
-  if (newTeam === authStore.user.team) return
+const filteredFeedDays = computed(() => {
+  let logs = allLogs.value
   
-  if (!confirm(`Are you sure you want to change your team to "${newTeam}"?`)) {
-    return
+  if (feedFilterDate.value) {
+    logs = logs.filter(log => log.date === feedFilterDate.value)
   }
   
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ team: newTeam })
+  if (feedSearchQuery.value) {
+    const q = feedSearchQuery.value.toLowerCase()
+    logs = logs.filter(log => 
+      (log.name && log.name.toLowerCase().includes(q)) ||
+      (log.rollNumber && log.rollNumber.toLowerCase().includes(q)) ||
+      (log.team && log.team.toLowerCase().includes(q)) ||
+      (log.todayLog && log.todayLog.toLowerCase().includes(q)) ||
+      (log.tomorrowGoal && log.tomorrowGoal.toLowerCase().includes(q))
+    )
+  }
+  
+  const dateGroups = {}
+  logs.forEach(log => {
+    if (!dateGroups[log.date]) {
+      dateGroups[log.date] = []
+    }
+    dateGroups[log.date].push(log)
+  })
+  
+  const days = Object.entries(dateGroups).map(([date, dayLogs]) => {
+    const teamGroups = {}
+    let dayHours = 0
+    dayLogs.forEach(log => {
+      if (!teamGroups[log.team]) {
+        teamGroups[log.team] = []
+      }
+      teamGroups[log.team].push(log)
+      dayHours += (log.hours?.length || 0)
     })
     
-    if (res.ok) {
-      const updatedUser = await res.json()
-      authStore.user = updatedUser
-      localStorage.setItem('trackerUser', JSON.stringify(updatedUser))
-      
-      // Auto reload local log status for date change if needed
-      handleDateChange()
-      alert(`Team successfully changed to "${newTeam}"!`)
-    } else {
-      alert("Failed to update team.")
+    return {
+      date,
+      totalHours: dayHours,
+      teams: teamGroups
     }
-  } catch (err) {
-    alert("Network error. Could not update team.")
+  })
+  
+  days.sort((a, b) => new Date(b.date) - new Date(a.date))
+  
+  if (!feedFilterDate.value && !feedSearchQuery.value) {
+    return days.slice(0, 25)
+  }
+  return days
+})
+
+const formatFeedDate = (dateStr) => {
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  const formatOptions = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today'
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday'
+  } else {
+    return date.toLocaleDateString('en-US', formatOptions)
   }
 }
 </script>

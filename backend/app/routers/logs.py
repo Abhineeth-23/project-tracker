@@ -1,11 +1,10 @@
 import time
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
 from ..database import get_db
 from .. import models, schemas
-from ..utils import send_to_google_sheets # Import our new helper!
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 
@@ -15,8 +14,8 @@ def get_logs(db: Session = Depends(get_db)):
     return logs
 
 @router.post("/", response_model=schemas.LogResponse)
-def create_log(log: schemas.LogCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # 1. Save the new log to Postgres
+def create_log(log: schemas.LogCreate, db: Session = Depends(get_db)):
+    # 1. Save the new log to Postgres/SQLite
     new_log = models.Log(
         userId=log.userId,
         name=log.name,
@@ -31,31 +30,6 @@ def create_log(log: schemas.LogCreate, background_tasks: BackgroundTasks, db: Se
     db.add(new_log)
     db.commit()
     db.refresh(new_log)
-    
-    # 2. Prepare the data for Google Sheets
-    # Fetch all logs for this specific team on this specific date to keep the sheet accurate
-    team_logs = db.query(models.Log).filter(models.Log.team == log.team, models.Log.date == log.date).all()
-    
-    formatted_logs = []
-    for r in team_logs:
-        formatted_logs.append({
-            "name": r.name,
-            "todayLog": r.todayLog,
-            "tomorrowGoal": r.tomorrowGoal,
-            # Format the JSON array [1,2,3] into a string "1, 2, 3" for the spreadsheet
-            "hours": ", ".join(map(str, r.hours)) if r.hours else "" 
-        })
-        
-    payload = {
-        "action": "sync_day",
-        "team": log.team,
-        "date": log.date,
-        "logs": formatted_logs
-    }
-    
-    # 3. Fire and Forget! 
-    # This tells FastAPI to run this function after returning the response to the user.
-    background_tasks.add_task(send_to_google_sheets, payload)
     
     return new_log
 

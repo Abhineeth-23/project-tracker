@@ -49,12 +49,6 @@
             <input type="text" required v-model="regRoll" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 24E51A6634">
           </div>
           <div>
-            <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Team Assignment</label>
-            <select v-model="regTeam" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-              <option v-for="team in TEAMS" :key="team" :value="team">{{ team }}</option>
-            </select>
-          </div>
-          <div>
             <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
             <div class="relative">
               <input :type="showRegPass ? 'text' : 'password'" required v-model="regPass" class="w-full rounded-xl border border-slate-200 py-2.5 md:py-3 pl-3 pr-10 md:pl-4 md:pr-12 text-sm md:text-base focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Create a password">
@@ -94,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -103,7 +97,6 @@ const authStore = useAuthStore()
 
 // State
 const authMode = ref('login')
-const TEAMS = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"])
 
 // Visibility Toggles
 const showLoginPass = ref(false)
@@ -115,22 +108,6 @@ const loginRoll = ref('')
 const loginPass = ref('')
 const regName = ref('')
 const regRoll = ref('')
-const regTeam = ref('Digi Yatra')
-
-onMounted(async () => {
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`)
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        TEAMS.value = data.map(t => t.name)
-        regTeam.value = TEAMS.value[0]
-      }
-    }
-  } catch (err) {
-    console.error("Failed to load active teams, using fallback.", err)
-  }
-})
 const regPass = ref('')
 const adminUser = ref('')
 const adminPass = ref('')
@@ -147,7 +124,7 @@ const handleRegister = async () => {
   const success = await authStore.register({
     name: regName.value,
     rollNumber: regRoll.value,
-    team: regTeam.value,
+    team: "",
     password: regPass.value
   })
   if (success) router.push('/dashboard')

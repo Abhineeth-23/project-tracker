@@ -1,15 +1,14 @@
 import time
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
-from ..utils import send_to_google_sheets
 from typing import List
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 @router.post("/register", response_model=schemas.UserResponse)
-def register_user(user_data: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def register_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     clean_roll = user_data.rollNumber.strip().upper() # Forces uppercase instantly
     
     if not clean_roll:
@@ -22,7 +21,7 @@ def register_user(user_data: schemas.UserCreate, background_tasks: BackgroundTas
     new_user = models.User(
         name=user_data.name,
         rollNumber=clean_roll,
-        team=user_data.team,
+        team=user_data.team or "",
         password=user_data.password, # Save the password
         role="student"
     )
@@ -30,13 +29,29 @@ def register_user(user_data: schemas.UserCreate, background_tasks: BackgroundTas
     db.commit()
     db.refresh(new_user)
     
-    # Sync new member to Google Sheets
-    payload = {
-        "action": "add_member",
-        "team": new_user.team,
-        "name": new_user.name
-    }
-    background_tasks.add_task(send_to_google_sheets, payload)
+    return new_user
+
+@router.post("/admin-create-student", response_model=schemas.UserResponse)
+def admin_create_student(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    clean_roll = user_data.rollNumber.strip().upper()
+    
+    if not clean_roll:
+        raise HTTPException(status_code=400, detail="Roll number cannot be empty.")
+    
+    existing_user = db.query(models.User).filter(models.User.rollNumber == clean_roll).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Roll number already registered")
+        
+    new_user = models.User(
+        name=user_data.name,
+        rollNumber=clean_roll,
+        team=user_data.team or "",
+        password=user_data.password,
+        role="student"
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     
     return new_user
 
@@ -57,30 +72,18 @@ def get_all_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
 @router.put("/{user_id}", response_model=schemas.UserResponse)
-def update_user(user_id: int, user_update: schemas.UserUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    db_user = db.query (models.User).filter(models.User.id == user_id).first()
+def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    old_team = db_user.team
-    
-    if user_update.name: db_user.name = user_update.name
-    if user_update.rollNumber: db_user.rollNumber = user_update.rollNumber.upper()
-    if user_update.team: db_user.team = user_update.team
-    if user_update.role: db_user.role = user_update.role
+    if user_update.name is not None: db_user.name = user_update.name
+    if user_update.rollNumber is not None: db_user.rollNumber = user_update.rollNumber.upper()
+    if user_update.team is not None: db_user.team = user_update.team
+    if user_update.role is not None: db_user.role = user_update.role
 
     db.commit()
     db.refresh(db_user)
-    
-    # Sync member to Google Sheets if team assignment changed
-    if user_update.team and user_update.team != old_team:
-        payload = {
-            "action": "add_member",
-            "team": db_user.team,
-            "name": db_user.name
-        }
-        background_tasks.add_task(send_to_google_sheets, payload)
-        
     return db_user
 
 @router.delete("/{user_id}")
