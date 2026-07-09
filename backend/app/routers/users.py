@@ -71,6 +71,14 @@ def login_user(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 def get_all_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
+@router.get("/{user_id}", response_model=schemas.UserResponse)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+
 @router.put("/{user_id}", response_model=schemas.UserResponse)
 def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()

@@ -434,6 +434,20 @@ watch(selectedDate, handleDateChange)
 // --- API FETCHING ---
 onMounted(async () => {
   try {
+    // Refresh user profile if it's a student (id > 0)
+    if (authStore.user && authStore.user.id > 0) {
+      try {
+        const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}`)
+        if (userRes.ok) {
+          const freshUser = await userRes.json()
+          authStore.user = freshUser
+          localStorage.setItem('trackerUser', JSON.stringify(freshUser))
+        }
+      } catch (userErr) {
+        console.error("Failed to refresh user profile:", userErr)
+      }
+    }
+
     const [logsRes, momRes, holidaysRes, teamsRes] = await Promise.all([
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
       fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`),
@@ -444,7 +458,7 @@ onMounted(async () => {
     // Process Teams
     if (teamsRes.ok) {
       const tData = await teamsRes.json()
-      if (Array.isArray(tData) && tData.length > 0) {
+      if (Array.isArray(tData)) {
         availableTeams.value = tData.map(t => t.name)
       }
     }

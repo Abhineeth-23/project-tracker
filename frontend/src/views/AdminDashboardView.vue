@@ -691,9 +691,7 @@ const fetchAllData = async () => {
     const teamsData = await teamsRes.json()
     if (Array.isArray(teamsData)) {
       allTeams.value = teamsData
-      if (teamsData.length > 0) {
-        AVAILABLE_TEAMS.value = [...teamsData.map(t => t.name), "Management"]
-      }
+      AVAILABLE_TEAMS.value = [...teamsData.map(t => t.name), "Management"]
     }
     
   } catch (err) {

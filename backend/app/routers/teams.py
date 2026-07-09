@@ -33,6 +33,12 @@ def delete_team(team_id: int, db: Session = Depends(get_db)):
     if not db_team:
         raise HTTPException(status_code=404, detail="Team not found")
     
+    # 1. Update all users assigned to this team to be unassigned ("")
+    db.query(models.User).filter(models.User.team == db_team.name).update({models.User.team: ""})
+    
+    # 2. Update all historical logs with this team to be unassigned ("")
+    db.query(models.Log).filter(models.Log.team == db_team.name).update({models.Log.team: ""})
+    
     db.delete(db_team)
     db.commit()
     return {"message": "Team deleted successfully"}
