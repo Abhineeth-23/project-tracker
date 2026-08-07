@@ -280,6 +280,65 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'suggestions'" class="space-y-6">
+        <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-800">Suggestions & Features</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Manage suggestions and feature requests submitted by all teams.</p>
+        </div>
+
+        <div v-if="Object.keys(groupedSuggestions).length === 0" class="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
+          <p class="text-sm font-semibold text-slate-500">No suggestions or feature requests have been logged yet.</p>
+        </div>
+
+        <div v-else class="space-y-8">
+          <div v-for="(teamItems, team) in groupedSuggestions" :key="team" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="bg-blue-50 px-4 md:px-6 py-4 border-b border-blue-100 flex items-center justify-between">
+              <h4 class="font-bold text-blue-800 text-base flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                {{ team || 'Unassigned' }}
+              </h4>
+              <span class="text-xs font-bold text-blue-800 bg-blue-200 px-2.5 py-1 rounded-full">{{ teamItems.length }} Items</span>
+            </div>
+            <div class="p-4 md:p-6 space-y-4">
+              <div v-for="item in teamItems" :key="item.id" class="border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row gap-4">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full border', item.suggestionType === 'Suggestion' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-200']">
+                      {{ item.suggestionType }}
+                    </span>
+                  </div>
+                  <p class="text-sm text-slate-800 font-medium mb-2 whitespace-pre-line">{{ item.suggestionDescription }}</p>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    Logged by {{ item.name }} ({{ item.rollNumber }}) on {{ new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                  </p>
+                </div>
+                <div class="flex flex-col gap-2 shrink-0 lg:items-end">
+                  <div v-if="item.suggestionDeadline">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 lg:text-right">Target Deadline</p>
+                    <p class="text-sm font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg inline-block">
+                      {{ new Date(item.suggestionDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                    </p>
+                  </div>
+                  <div class="mt-auto pt-2 lg:pt-0">
+                    <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 lg:text-right">Status</label>
+                    <select 
+                      v-model="item.suggestionStatus"
+                      @change="updateSuggestionStatus(item.id, $event.target.value)"
+                      :class="['text-xs font-bold px-3 py-1.5 rounded-lg border outline-none cursor-pointer', getStatusClass(item.suggestionStatus)]"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'holidays'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div v-if="authStore.user?.role === 'admin'" class="col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 h-fit">
           <h3 class="text-base md:text-lg font-bold text-teal-700 flex items-center gap-2 mb-6">
@@ -611,6 +670,7 @@ const TABS = [
   { id: 'attendance', label: 'Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
   { id: 'records', label: 'Records', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>' },
   { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+  { id: 'suggestions', label: 'Suggestions', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
   { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' },
   { id: 'users', label: 'Users & Teams', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' }
 ]
@@ -938,6 +998,45 @@ const getRollsForHourPDF = (hourId) => {
     .filter(log => log.hours?.includes(hourId))
     .map(log => log.rollNumber)
   return [...new Set(rolls)]
+}
+
+// Suggestions logic
+const groupedSuggestions = computed(() => {
+  const groups = {}
+  allLogs.value
+    .filter(log => log.suggestionDescription)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .forEach(log => {
+      if (!groups[log.team]) groups[log.team] = []
+      groups[log.team].push(log)
+    })
+  return groups
+})
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'Resolved': return 'bg-teal-50 text-teal-700 border-teal-200'
+    case 'In Progress': return 'bg-blue-50 text-blue-700 border-blue-200'
+    case 'Rejected': return 'bg-red-50 text-red-700 border-red-200'
+    default: return 'bg-slate-50 text-slate-700 border-slate-300' // Pending
+  }
+}
+
+const updateSuggestionStatus = async (logId, status) => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs/${logId}/suggestion-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    })
+    if (!res.ok) {
+      alert("Failed to update status")
+      await fetchAllData() // Revert to server state on failure
+    }
+  } catch (err) {
+    alert("Network error updating status")
+    await fetchAllData()
+  }
 }
 
 // --- PDF & EXPORT ---

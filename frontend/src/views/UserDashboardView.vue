@@ -90,12 +90,46 @@
                 <textarea v-model="tomorrowGoal" rows="3" class="w-full rounded-xl border border-slate-200 p-3 md:p-4 text-sm md:text-base focus:ring-2 focus:ring-teal-500 outline-none resize-none" placeholder="What's next?"></textarea>
               </div>
               
+              <div class="border-t border-slate-200 pt-6 mt-6">
+                <button type="button" @click="showSuggestionForm = !showSuggestionForm" class="flex items-center justify-between w-full text-left bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 transition-colors">
+                  <span class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Add a Suggestion or Feature Request (Optional)
+                  </span>
+                  <svg :class="['w-5 h-5 text-slate-400 transition-transform duration-200', showSuggestionForm ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                <div v-if="showSuggestionForm" class="mt-4 space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div>
+                    <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Type</label>
+                    <div class="flex gap-4">
+                      <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input type="radio" v-model="suggestionType" value="Suggestion" class="text-purple-600 focus:ring-purple-500"> Suggestion
+                      </label>
+                      <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input type="radio" v-model="suggestionType" value="Feature Request" class="text-purple-600 focus:ring-purple-500"> Feature Request
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Description</label>
+                    <textarea v-model="suggestionDescription" rows="2" class="w-full rounded-xl border border-slate-300 p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none" placeholder="Describe your suggestion or feature..."></textarea>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-2">Target Deadline (Optional)</label>
+                    <input type="date" v-model="suggestionDeadline" class="w-full sm:w-auto bg-white border border-slate-300 text-slate-700 text-sm px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-purple-500">
+                  </div>
+                </div>
+              </div>
+
               <div v-if="message" :class="['p-3 md:p-4 rounded-xl text-xs md:text-sm font-medium text-center', message.includes('Success') ? 'bg-teal-50 text-teal-800' : 'bg-red-50 text-red-800']">
                 {{ message }}
               </div>
               
               <button type="submit" :disabled="isSubmitting || !isFormValid" :class="['w-full font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all duration-200 text-sm md:text-base', isSubmitting || !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300' : (editingLogId ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 text-white')]">
-                {{ isSubmitting ? 'Saving...' : (!isFormValid ? 'Fill all fields to submit' : (editingLogId ? 'Update Existing Log' : 'Submit Daily Update')) }}
+                {{ isSubmitting ? 'Saving...' : (!isFormValid ? 'Fill required fields to submit' : (editingLogId ? 'Update Existing Log' : 'Submit Daily Update')) }}
               </button>
               
             </form>
@@ -304,6 +338,42 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'suggestions'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-4 md:px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h3 class="text-base md:text-lg font-bold text-slate-800">Team Suggestions & Features</h3>
+          <span class="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full">{{ teamSuggestions.length }} Items</span>
+        </div>
+        <div class="p-4 md:p-6">
+          <div v-if="teamSuggestions.length === 0" class="border border-dashed border-slate-300 rounded-lg p-10 text-center bg-slate-50">
+            <p class="text-slate-500 italic text-sm">No suggestions or feature requests logged for your team yet.</p>
+          </div>
+          <div v-else class="space-y-4">
+            <div v-for="item in teamSuggestions" :key="item.id" class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex flex-col md:flex-row gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full border', item.suggestionType === 'Suggestion' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-200']">
+                    {{ item.suggestionType }}
+                  </span>
+                  <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full border', getStatusClass(item.suggestionStatus)]">
+                    {{ item.suggestionStatus }}
+                  </span>
+                </div>
+                <p class="text-sm text-slate-800 font-medium mb-2 whitespace-pre-line">{{ item.suggestionDescription }}</p>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  Logged by {{ item.name }} on {{ new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </p>
+              </div>
+              <div v-if="item.suggestionDeadline" class="md:text-right shrink-0">
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target Deadline</p>
+                <p class="text-sm font-bold text-slate-800 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg inline-block">
+                  {{ new Date(item.suggestionDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'holidays'" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-50 px-4 md:px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h3 class="text-base md:text-lg font-bold text-slate-800">Declared Holidays</h3>
@@ -346,6 +416,7 @@ const TABS = [
   { id: 'daily', label: 'Update Log', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'progress', label: 'Daily Progress', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
   { id: 'attendance', label: 'My Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
+  { id: 'suggestions', label: 'Suggestions', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
   { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
   { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' }
 ]
@@ -380,6 +451,11 @@ const tomorrowGoal = ref('')
 const isSubmitting = ref(false)
 const message = ref('')
 
+const showSuggestionForm = ref(false)
+const suggestionType = ref('Suggestion')
+const suggestionDescription = ref('')
+const suggestionDeadline = ref('')
+
 const previousGoal = ref('')
 const previousDate = ref('')
 
@@ -412,11 +488,19 @@ const handleDateChange = () => {
     selectedHours.value = [...(existingLog.hours || [])]
     todayLog.value = existingLog.todayLog || ''
     tomorrowGoal.value = existingLog.tomorrowGoal || ''
+    suggestionType.value = existingLog.suggestionType || 'Suggestion'
+    suggestionDescription.value = existingLog.suggestionDescription || ''
+    suggestionDeadline.value = existingLog.suggestionDeadline || ''
+    showSuggestionForm.value = !!existingLog.suggestionDescription
   } else {
     editingLogId.value = null
     selectedHours.value = []
     todayLog.value = ''
     tomorrowGoal.value = ''
+    suggestionType.value = 'Suggestion'
+    suggestionDescription.value = ''
+    suggestionDeadline.value = ''
+    showSuggestionForm.value = false
   }
 
   const pastLogs = myLogs.value.filter(log => log.date < selectedDate.value)
@@ -519,7 +603,10 @@ const submitLog = async () => {
         hours: selectedHours.value,
         todayLog: todayLog.value,
         tomorrowGoal: tomorrowGoal.value,
-        date: selectedDate.value
+        date: selectedDate.value,
+        suggestionType: showSuggestionForm.value ? suggestionType.value : null,
+        suggestionDescription: showSuggestionForm.value ? suggestionDescription.value : null,
+        suggestionDeadline: showSuggestionForm.value ? suggestionDeadline.value : null,
       })
     })
 
@@ -685,6 +772,24 @@ const formatFeedDate = (dateStr) => {
     return 'Yesterday'
   } else {
     return date.toLocaleDateString('en-US', formatOptions)
+  }
+}
+
+// Suggestions Logic
+const teamSuggestions = computed(() => {
+  const userTeam = authStore.user?.team
+  if (!userTeam) return []
+  return allLogs.value
+    .filter(log => log.team === userTeam && log.suggestionDescription)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+})
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'Resolved': return 'bg-teal-50 text-teal-700 border-teal-200'
+    case 'In Progress': return 'bg-blue-50 text-blue-700 border-blue-200'
+    case 'Rejected': return 'bg-red-50 text-red-700 border-red-200'
+    default: return 'bg-slate-100 text-slate-700 border-slate-300' // Pending
   }
 }
 </script>

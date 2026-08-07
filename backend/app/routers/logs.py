@@ -25,7 +25,11 @@ def create_log(log: schemas.LogCreate, db: Session = Depends(get_db)):
         todayLog=log.todayLog,
         tomorrowGoal=log.tomorrowGoal,
         date=log.date,
-        timestamp=int(time.time() * 1000)
+        timestamp=int(time.time() * 1000),
+        suggestionType=log.suggestionType,
+        suggestionDescription=log.suggestionDescription,
+        suggestionDeadline=log.suggestionDeadline,
+        suggestionStatus=log.suggestionStatus or "Pending"
     )
     db.add(new_log)
     db.commit()
@@ -49,6 +53,18 @@ def update_log(log_id: int, log_update: schemas.LogCreate, db: Session = Depends
     db_log.todayLog = log_update.todayLog
     db_log.tomorrowGoal = log_update.tomorrowGoal
     
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+@router.patch("/{log_id}/suggestion-status")
+def update_suggestion_status(log_id: int, status_update: schemas.SuggestionStatusUpdate, db: Session = Depends(get_db)):
+    """Update the status of a suggestion/feature request"""
+    db_log = db.query(models.Log).filter(models.Log.id == log_id).first()
+    if not db_log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    
+    db_log.suggestionStatus = status_update.status
     db.commit()
     db.refresh(db_log)
     return db_log

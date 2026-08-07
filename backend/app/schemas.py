@@ -29,6 +29,10 @@ class LogCreate(BaseModel):
     todayLog: Optional[str] = ""
     tomorrowGoal: Optional[str] = ""
     date: str
+    suggestionType: Optional[str] = None
+    suggestionDescription: Optional[str] = None
+    suggestionDeadline: Optional[str] = None
+    suggestionStatus: Optional[str] = "Pending"
 
 class LogResponse(LogCreate):
     id: int
@@ -41,6 +45,9 @@ class UserUpdate(BaseModel):
     rollNumber: Optional[str] = None
     team: Optional[str] = None
     role: Optional[str] = None
+
+class SuggestionStatusUpdate(BaseModel):
+    status: str
 
 class HolidayCreate(BaseModel):
     date: str

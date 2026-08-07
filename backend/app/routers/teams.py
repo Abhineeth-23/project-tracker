@@ -36,8 +36,7 @@ def delete_team(team_id: int, db: Session = Depends(get_db)):
     # 1. Update all users assigned to this team to be unassigned ("")
     db.query(models.User).filter(models.User.team == db_team.name).update({models.User.team: ""})
     
-    # 2. Update all historical logs with this team to be unassigned ("")
-    db.query(models.Log).filter(models.Log.team == db_team.name).update({models.Log.team: ""})
+    # 2. Historical logs will NOT be updated to preserve history
     
     db.delete(db_team)
     db.commit()
