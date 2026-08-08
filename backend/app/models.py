@@ -27,10 +27,10 @@ class Log(Base):
     tomorrowGoal = Column(String)
     date = Column(String)
     timestamp = Column(BigInteger)
-    suggestionType = Column(String, nullable=True)
-    suggestionDescription = Column(String, nullable=True)
-    suggestionDeadline = Column(String, nullable=True)
-    suggestionStatus = Column(String, default="Pending")
+    suggestionType = Column("suggestiontype", String, nullable=True)
+    suggestionDescription = Column("suggestiondescription", String, nullable=True)
+    suggestionDeadline = Column("suggestiondeadline", String, nullable=True)
+    suggestionStatus = Column("suggestionstatus", String, default="Pending")
 
 # 3. The Holidays Table
 class Holiday(Base):
