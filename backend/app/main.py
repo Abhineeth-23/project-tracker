@@ -49,19 +49,37 @@ def keep_alive():
 
 @app.get("/api/migrate-db")
 def migrate_db(db: Session = Depends(get_db)):
-    columns = [
-        ("suggestionType", "VARCHAR"),
-        ("suggestionDescription", "VARCHAR"),
-        ("suggestionDeadline", "VARCHAR"),
-        ("suggestionStatus", "VARCHAR DEFAULT 'Pending'")
-    ]
     results = []
-    for col_name, col_type in columns:
+    
+    # 1. Try to rename lowercase columns to camelCase (if they were created without quotes)
+    rename_queries = [
+        'ALTER TABLE logs RENAME COLUMN suggestiontype TO "suggestionType";',
+        'ALTER TABLE logs RENAME COLUMN suggestiondescription TO "suggestionDescription";',
+        'ALTER TABLE logs RENAME COLUMN suggestiondeadline TO "suggestionDeadline";',
+        'ALTER TABLE logs RENAME COLUMN suggestionstatus TO "suggestionStatus";'
+    ]
+    for q in rename_queries:
         try:
-            db.execute(text(f"ALTER TABLE logs ADD COLUMN {col_name} {col_type}"))
-            results.append(f"Added {col_name}")
+            db.execute(text(q))
+            results.append(f"Renamed: {q}")
         except Exception as e:
             db.rollback()
-            results.append(f"Failed to add {col_name} (it may already exist)")
+            results.append(f"Rename skipped (may not exist or already renamed)")
+            
+    # 2. Try to add them with quotes (if they were never created)
+    add_queries = [
+        'ALTER TABLE logs ADD COLUMN "suggestionType" VARCHAR;',
+        'ALTER TABLE logs ADD COLUMN "suggestionDescription" VARCHAR;',
+        'ALTER TABLE logs ADD COLUMN "suggestionDeadline" VARCHAR;',
+        'ALTER TABLE logs ADD COLUMN "suggestionStatus" VARCHAR DEFAULT \'Pending\';'
+    ]
+    for q in add_queries:
+        try:
+            db.execute(text(q))
+            results.append(f"Added: {q}")
+        except Exception as e:
+            db.rollback()
+            results.append(f"Add skipped (column likely already exists)")
+
     db.commit()
     return {"status": "migration executed", "details": results}
