@@ -64,7 +64,7 @@ def migrate_db(db: Session = Depends(get_db)):
             results.append(f"Renamed: {q}")
         except Exception as e:
             db.rollback()
-            results.append(f"Rename skipped (may not exist or already renamed)")
+            results.append(f"Rename failed: {q} - Error: {str(e)}")
             
     # 2. Try to add them with quotes (if they were never created)
     add_queries = [
@@ -79,7 +79,7 @@ def migrate_db(db: Session = Depends(get_db)):
             results.append(f"Added: {q}")
         except Exception as e:
             db.rollback()
-            results.append(f"Add skipped (column likely already exists)")
+            results.append(f"Add failed: {q} - Error: {str(e)}")
 
     db.commit()
     return {"status": "migration executed", "details": results}
