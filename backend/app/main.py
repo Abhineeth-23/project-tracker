@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import logs, users, holidays, mom, teams
-from .database import engine, Base
+from .database import engine, Base, get_db
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from sqlalchemy import text
 
 Base.metadata.create_all(bind=engine)
 
@@ -43,3 +46,22 @@ def health_check():
 @app.get("/keep-alive")
 def keep_alive():
     return {"status": "I am awake!"}
+
+@app.get("/api/migrate-db")
+def migrate_db(db: Session = Depends(get_db)):
+    columns = [
+        ("suggestionType", "VARCHAR"),
+        ("suggestionDescription", "VARCHAR"),
+        ("suggestionDeadline", "VARCHAR"),
+        ("suggestionStatus", "VARCHAR DEFAULT 'Pending'")
+    ]
+    results = []
+    for col_name, col_type in columns:
+        try:
+            db.execute(text(f"ALTER TABLE logs ADD COLUMN {col_name} {col_type}"))
+            results.append(f"Added {col_name}")
+        except Exception as e:
+            db.rollback()
+            results.append(f"Failed to add {col_name} (it may already exist)")
+    db.commit()
+    return {"status": "migration executed", "details": results}
