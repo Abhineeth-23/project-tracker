@@ -8,12 +8,12 @@ from .. import models, schemas
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 
-@router.get("/", response_model=List[schemas.LogResponse])
+@router.get("", response_model=List[schemas.LogResponse])
 def get_logs(db: Session = Depends(get_db)):
     logs = db.query(models.Log).order_by(models.Log.timestamp.desc()).all()
     return logs
 
-@router.post("/", response_model=schemas.LogResponse)
+@router.post("", response_model=schemas.LogResponse)
 def create_log(log: schemas.LogCreate, db: Session = Depends(get_db)):
     # 1. Save the new log to Postgres/SQLite
     new_log = models.Log(
