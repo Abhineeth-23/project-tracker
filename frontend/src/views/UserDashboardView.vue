@@ -3,8 +3,18 @@
     <header class="bg-gradient-to-r from-blue-700 to-teal-600 text-white shadow-md sticky top-0 z-40">
       <div class="px-4 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
-          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
-          <h1 class="text-lg md:text-2xl font-bold tracking-wide">CallHealth X HITAM Project Tracker</h1>
+          <div class="p-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/15 shadow-sm shrink-0">
+            <svg class="w-5 h-5 text-teal-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <div class="flex items-center gap-1.5">
+              <span class="text-base md:text-xl font-bold tracking-tight text-white">CallHealth</span>
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-[10px] md:text-xs font-black text-teal-200 border border-white/20 shadow-sm leading-none" title="Collaboration">✕</span>
+              <span class="text-base md:text-xl font-extrabold text-teal-100 tracking-wider">HITAM</span>
+            </div>
+            <span class="hidden sm:inline text-white/30 font-light">|</span>
+            <span class="text-xs md:text-sm font-medium text-blue-100 tracking-wide">Project Tracker</span>
+          </div>
         </div>
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
           <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 max-w-[250px] sm:max-w-none flex items-center gap-1.5">
@@ -27,7 +37,287 @@
       </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+      
+      <!-- Overview / Dashboard Home Tab -->
+      <div v-if="activeTab === 'overview'" class="space-y-6">
+        
+        <!-- Welcome Hero & Daily Log Callout -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-7 relative overflow-hidden">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                  {{ authStore.user?.team ? `Module: ${authStore.user.team}` : 'Unassigned Module' }}
+                </span>
+                <span class="text-xs text-slate-400">•</span>
+                <span class="text-xs font-semibold text-slate-500 font-mono">{{ todayFormattedLong }}</span>
+              </div>
+              <h2 class="text-xl md:text-2xl font-bold text-slate-800">
+                Welcome back, {{ authStore.user?.name || 'Contributor' }}
+              </h2>
+              <p class="text-xs md:text-sm text-slate-500 mt-0.5">
+                Roll Number: <span class="font-semibold text-slate-700">{{ authStore.user?.rollNumber }}</span>
+              </p>
+            </div>
+
+            <!-- Quick Action Button if pending -->
+            <div v-if="authStore.user?.team && !hasLoggedToday" class="shrink-0">
+              <button 
+                @click="quickStartLog" 
+                class="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-bold px-5 py-3 rounded-xl shadow-md transition-all active:scale-[0.98] text-sm"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Log Today's Work
+              </button>
+            </div>
+            
+            <div v-else-if="authStore.user?.team && hasLoggedToday" class="shrink-0">
+              <button 
+                @click="quickStartLog" 
+                class="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all text-xs md:text-sm"
+              >
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                Edit Today's Log
+              </button>
+            </div>
+          </div>
+
+          <!-- Today's Status Banner (Logged vs Pending) -->
+          <div class="mt-5">
+            <div v-if="!authStore.user?.team" class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              <div>
+                <h4 class="text-sm font-bold text-amber-900">Module Assignment Pending</h4>
+                <p class="text-xs text-amber-700 mt-0.5">Please contact the project administrator to assign your track before logging daily work.</p>
+              </div>
+            </div>
+
+            <!-- If Already Logged Today -->
+            <div v-else-if="hasLoggedToday" class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-4 md:p-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-emerald-100">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                  </span>
+                  <span class="text-sm font-bold text-emerald-900">Today's Work Logged</span>
+                  <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
+                    {{ todayLogEntry.hours?.length || 0 }} Hours Contributed
+                  </span>
+                </div>
+                <span class="text-[11px] font-mono text-emerald-700">Recorded for {{ selectedDateFormatted }}</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs md:text-sm">
+                <div class="bg-white/80 rounded-lg p-3 border border-emerald-100">
+                  <p class="text-[10px] uppercase font-bold text-emerald-800 tracking-wider mb-1">Accomplished Tasks</p>
+                  <p class="text-slate-700 whitespace-pre-line leading-relaxed">{{ todayLogEntry.todayLog || 'Hours recorded.' }}</p>
+                </div>
+                <div class="bg-white/80 rounded-lg p-3 border border-emerald-100">
+                  <p class="text-[10px] uppercase font-bold text-teal-800 tracking-wider mb-1">Next Sprint Target</p>
+                  <p class="text-slate-700 whitespace-pre-line leading-relaxed">{{ todayLogEntry.tomorrowGoal || 'None specified.' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- If NOT Logged Today -->
+            <div v-else class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 md:p-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <div class="p-2 bg-amber-100 rounded-lg text-amber-700 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-amber-900">Today's Progress Update Pending</h4>
+                    <p class="text-xs text-amber-700 mt-0.5">Please submit your contributed hours, accomplished tasks, and next targets for today.</p>
+                    
+                    <div v-if="previousGoal" class="mt-2.5 text-xs text-slate-700 bg-white/80 p-2.5 rounded-lg border border-amber-200/60 inline-block">
+                      <span class="font-bold text-slate-800">Target from {{ previousDate }}:</span>
+                      <span class="italic text-slate-600 ml-1">"{{ previousGoal }}"</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  @click="quickStartLog" 
+                  class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>Submit Today's Log</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards (Clean SVGs, Enterprise Tone) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          
+          <!-- Metric 1: Total Hours -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Hours Logged</span>
+              <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-2xl font-black text-slate-800">{{ totalHoursLogged }}</span>
+              <span class="text-xs font-semibold text-slate-500">hrs total</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Across all sessions</p>
+          </div>
+
+          <!-- Metric 2: Log Submissions -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Work Logs</span>
+              <div class="p-1.5 bg-teal-50 text-teal-600 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-2xl font-black text-slate-800">{{ totalDaysLogged }}</span>
+              <span class="text-xs font-semibold text-slate-500">days</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Recorded submissions</p>
+          </div>
+
+          <!-- Metric 3: Assigned Module -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Project Module</span>
+              <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-slate-800 truncate" :title="authStore.user?.team || 'Unassigned'">
+              {{ authStore.user?.team || 'Unassigned' }}
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Assigned stream</p>
+          </div>
+
+          <!-- Metric 4: Latest Sync / Meeting -->
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Latest Sync</span>
+              <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              </div>
+            </div>
+            <div class="text-sm font-bold text-slate-800 truncate" :title="latestMoM ? latestMoM.agenda : 'No meetings'">
+              {{ latestMoM ? latestMoM.agenda : 'No sync recorded' }}
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">
+              {{ latestMoM ? new Date(latestMoM.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Archive empty' }}
+            </p>
+          </div>
+
+        </div>
+
+        <!-- 2-Column: Recent Team Activity & Quick Resources -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Recent Module Updates (2 cols) -->
+          <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div>
+                <h3 class="text-base font-bold text-slate-800">Recent Module Activity</h3>
+                <p class="text-xs text-slate-500 mt-0.5">{{ authStore.user?.team ? `Updates from ${authStore.user.team}` : 'All project updates' }}</p>
+              </div>
+              <button 
+                @click="activeTab = 'progress'" 
+                class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                <span>View Full Feed</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+
+            <div v-if="recentTeamEntries.length === 0" class="text-center py-8 text-slate-400 text-xs">
+              No recent activity found for your team module.
+            </div>
+
+            <div v-else class="space-y-3">
+              <div 
+                v-for="entry in recentTeamEntries" 
+                :key="entry.id" 
+                class="p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
+              >
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-xs text-slate-800">{{ entry.name }}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">({{ entry.rollNumber }})</span>
+                  </div>
+                  <span class="text-[10px] font-semibold text-slate-500 font-mono">
+                    {{ new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {{ entry.todayLog || 'Logged attendance slots.' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Resources & Tools (1 col) -->
+          <div class="space-y-4">
+            
+            <!-- Latest MoM Preview Card -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] uppercase tracking-wider font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">Meeting Notes</span>
+                <span v-if="allMoMs.length > 0" class="text-[10px] text-slate-400">{{ allMoMs.length }} recorded</span>
+              </div>
+              
+              <div v-if="latestMoM">
+                <h4 class="text-sm font-bold text-slate-800 line-clamp-1">{{ latestMoM.agenda }}</h4>
+                <p class="text-xs text-slate-500 mt-1 font-mono">
+                  {{ new Date(latestMoM.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                </p>
+                <button 
+                  @click="activeTab = 'mom'" 
+                  class="mt-3 w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-xl text-xs transition-colors text-center"
+                >
+                  Open Meeting Archive
+                </button>
+              </div>
+              <div v-else class="text-xs text-slate-400 py-2">
+                No meeting notes uploaded yet.
+              </div>
+            </div>
+
+            <!-- Suggestions & Feedback Quick Link -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-bold text-slate-800">Feature Suggestions</h4>
+                <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                  {{ teamSuggestions.length }} Logged
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mb-3">Submit module improvement proposals or blockers.</p>
+              <button 
+                @click="activeTab = 'suggestions'" 
+                class="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-2 rounded-xl text-xs transition-colors"
+              >
+                View Suggestions
+              </button>
+            </div>
+
+            <!-- Next Holiday / Non-working Day -->
+            <div v-if="upcomingHoliday" class="bg-slate-100/80 rounded-2xl border border-slate-200 p-4 text-xs">
+              <div class="flex items-center justify-between text-slate-500 mb-1">
+                <span class="font-bold uppercase tracking-wider text-[10px]">Upcoming Holiday</span>
+                <span class="font-mono text-[10px]">{{ new Date(upcomingHoliday.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+              </div>
+              <p class="font-bold text-slate-800 text-sm">{{ upcomingHoliday.name }}</p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
       
       <div v-if="activeTab === 'daily'">
         <div v-if="!authStore.user?.team" class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center shadow-sm">
@@ -411,14 +701,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // --- TAB CONFIGURATION ---
-const activeTab = ref('daily')
+const activeTab = ref('overview')
 const TABS = [
-  { id: 'daily', label: 'Update Log', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
-  { id: 'progress', label: 'Daily Progress', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
-  { id: 'attendance', label: 'My Attendance', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
-  { id: 'suggestions', label: 'Suggestions', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
-  { id: 'mom', label: 'Minutes of Meet', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
-  { id: 'holidays', label: 'Holidays', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>' }
+  { id: 'overview', label: 'Dashboard', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>' },
+  { id: 'daily', label: 'Daily Log', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>' },
+  { id: 'progress', label: 'Team Updates', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>' },
+  { id: 'attendance', label: 'Log History', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>' },
+  { id: 'mom', label: 'Minutes of Meeting', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+  { id: 'suggestions', label: 'Suggestions', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>' },
+  { id: 'holidays', label: 'Calendar', icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' }
 ]
 
 const TIME_SLOTS = [
@@ -441,6 +732,47 @@ const feedSearchQuery = ref('')
 const todayString = new Date().toISOString().split('T')[0]
 const selectedDate = ref(todayString)
 const selectedDateFormatted = computed(() => new Date(selectedDate.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+const todayFormattedLong = computed(() => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))
+
+// Overview Dashboard Computed State
+const todayLogEntry = computed(() => myLogs.value.find(log => log.date === todayString))
+const hasLoggedToday = computed(() => !!todayLogEntry.value)
+
+const totalHoursLogged = computed(() => {
+  return myLogs.value.reduce((acc, log) => acc + (log.hours?.length || 0), 0)
+})
+
+const totalDaysLogged = computed(() => myLogs.value.length)
+
+const upcomingHoliday = computed(() => {
+  const today = new Date().toISOString().split('T')[0]
+  const future = allHolidays.value
+    .filter(h => h.date >= today)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+  return future.length > 0 ? future[0] : null
+})
+
+const latestMoM = computed(() => {
+  if (allMoMs.value.length === 0) return null
+  const sorted = [...allMoMs.value].sort((a, b) => new Date(b.date) - new Date(a.date))
+  return sorted[0]
+})
+
+const recentTeamEntries = computed(() => {
+  const userTeam = authStore.user?.team
+  if (!userTeam) return []
+  return allLogs.value
+    .filter(log => log.team === userTeam)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 4)
+})
+
+const quickStartLog = () => {
+  selectedDate.value = todayString
+  handleDateChange()
+  activeTab.value = 'daily'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // Edit Mode State
 const editingLogId = ref(null)

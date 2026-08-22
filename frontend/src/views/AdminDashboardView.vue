@@ -3,8 +3,18 @@
     <header class="bg-[#1976D2] text-white sticky top-0 z-40 shadow-md">
       <div class="px-4 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
-          <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
-          <h1 class="text-lg md:text-xl font-bold tracking-wide">CallHealth X HITAM Project Tracker</h1>
+          <div class="p-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/15 shadow-sm shrink-0">
+            <svg class="w-5 h-5 text-teal-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <div class="flex items-center gap-1.5">
+              <span class="text-base md:text-xl font-bold tracking-tight text-white">CallHealth</span>
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-[10px] md:text-xs font-black text-teal-200 border border-white/20 shadow-sm leading-none" title="Collaboration">✕</span>
+              <span class="text-base md:text-xl font-extrabold text-teal-100 tracking-wider">HITAM</span>
+            </div>
+            <span class="hidden sm:inline text-white/30 font-light">|</span>
+            <span class="text-xs md:text-sm font-medium text-blue-100 tracking-wide">Project Tracker</span>
+          </div>
         </div>
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
           <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">

@@ -4,8 +4,21 @@
     <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-teal-400/20 rounded-full blur-3xl"></div>
 
     <div class="bg-white rounded-2xl shadow-xl shadow-blue-900/5 w-full max-w-md overflow-hidden relative z-10 border border-slate-100">
-      <div class="bg-gradient-to-r from-blue-600 to-teal-500 p-6 md:p-8 text-center">
-        <h1 class="text-xl md:text-2xl font-bold text-white tracking-wide">CallHealth X HITAM Project Tracker</h1>
+      <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-teal-600 p-6 md:p-8 text-center relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-teal-400/20 rounded-full blur-xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-28 h-28 bg-blue-400/20 rounded-full blur-xl pointer-events-none"></div>
+        <div class="relative z-10">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] font-semibold text-teal-100 mb-3 shadow-inner">
+            <svg class="w-3.5 h-3.5 text-teal-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <span>Industry–Academia Collaboration</span>
+          </div>
+          <div class="flex items-center justify-center gap-2 text-white">
+            <span class="text-xl md:text-2xl font-bold tracking-tight">CallHealth</span>
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-xs font-black text-teal-200 border border-white/25 shadow-sm leading-none" title="Collaboration">✕</span>
+            <span class="text-xl md:text-2xl font-extrabold text-teal-100 tracking-wider">HITAM</span>
+          </div>
+          <p class="text-xs md:text-sm text-blue-100 font-medium mt-1.5 tracking-wide">Project Tracker Workspace</p>
+        </div>
       </div>
       
       <div class="p-5 md:p-8">
