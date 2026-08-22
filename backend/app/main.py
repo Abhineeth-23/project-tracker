@@ -23,7 +23,7 @@ except Exception as e:
 finally:
     db.close()
 
-app = FastAPI(title="CH Project Tracker")
+app = FastAPI(title="CallHealth X HITAM Project Tracker")
 
 app.add_middleware(
     CORSMiddleware,

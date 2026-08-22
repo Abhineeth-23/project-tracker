@@ -4,7 +4,7 @@
       <div class="px-4 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
           <svg class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
-          <h1 class="text-xl md:text-2xl font-bold tracking-wide">Project Tracker</h1>
+          <h1 class="text-lg md:text-2xl font-bold tracking-wide">CallHealth X HITAM Project Tracker</h1>
         </div>
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
           <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 max-w-[250px] sm:max-w-none flex items-center gap-1.5">

@@ -5,7 +5,7 @@
 
     <div class="bg-white rounded-2xl shadow-xl shadow-blue-900/5 w-full max-w-md overflow-hidden relative z-10 border border-slate-100">
       <div class="bg-gradient-to-r from-blue-600 to-teal-500 p-6 md:p-8 text-center">
-        <h1 class="text-xl md:text-2xl font-bold text-white tracking-wide">Project Tracker</h1>
+        <h1 class="text-xl md:text-2xl font-bold text-white tracking-wide">CallHealth X HITAM Project Tracker</h1>
       </div>
       
       <div class="p-5 md:p-8">

@@ -1,4 +1,4 @@
-# Project Tracker
+# CallHealth X HITAM Project Tracker
 
 A full-stack project management application built with Vue and Node.js.
 
