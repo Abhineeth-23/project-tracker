@@ -5,6 +5,7 @@ class UserCreate(BaseModel):
     name: str
     rollNumber: str
     team: Optional[str] = ""
+    company: Optional[str] = "CallHealth"
     password: str
 
 class UserLogin(BaseModel):
@@ -16,6 +17,7 @@ class UserResponse(BaseModel):
     name: str
     rollNumber: str
     team: Optional[str] = ""
+    company: Optional[str] = "CallHealth"
     role: str
     
     model_config = {"from_attributes": True} 
@@ -25,6 +27,7 @@ class LogCreate(BaseModel):
     name: str
     rollNumber: str
     team: str
+    company: Optional[str] = "CallHealth"
     hours: List[int] = []
     todayLog: Optional[str] = ""
     tomorrowGoal: Optional[str] = ""
@@ -44,6 +47,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     rollNumber: Optional[str] = None
     team: Optional[str] = None
+    company: Optional[str] = None
     role: Optional[str] = None
 
 class SuggestionStatusUpdate(BaseModel):
@@ -52,11 +56,13 @@ class SuggestionStatusUpdate(BaseModel):
 class HolidayCreate(BaseModel):
     date: str
     name: str
+    company: Optional[str] = "CallHealth"
 
 class HolidayResponse(BaseModel):
     id: int
     date: str
     name: str
+    company: Optional[str] = "CallHealth"
 
     class Config:
         from_attributes = True
@@ -71,6 +77,7 @@ class MoMCreateText(BaseModel):
     created_by: str
     attendees: Optional[str] = ""
     content: str
+    company: Optional[str] = "CallHealth"
     
 class MoMResponse(BaseModel):
     id: int
@@ -81,16 +88,19 @@ class MoMResponse(BaseModel):
     content: Optional[str] = None
     file_name: Optional[str] = None
     file_path: Optional[str] = None
+    company: Optional[str] = "CallHealth"
 
     class Config:
         from_attributes = True
 
 class TeamCreate(BaseModel):
     name: str
+    company: Optional[str] = "CallHealth"
 
 class TeamResponse(BaseModel):
     id: int
     name: str
+    company: Optional[str] = "CallHealth"
 
     class Config:
         from_attributes = True

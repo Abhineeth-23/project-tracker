@@ -1,37 +1,40 @@
 <template>
   <div class="min-h-screen pb-12 bg-slate-50">
-    <header class="bg-gradient-to-r from-blue-700 to-teal-600 text-white shadow-md sticky top-0 z-40">
-      <div class="px-4 md:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+    <header :class="['text-white shadow-sm sticky top-0 z-40 transition-colors duration-200', authStore.user?.company === 'Succeed International' ? 'bg-[#1e40af]' : 'bg-[#193099]']">
+      <div class="px-4 md:px-6 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
-          <div class="p-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/15 shadow-sm shrink-0">
-            <svg class="w-5 h-5 text-teal-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
+          <div class="p-2 bg-white/10 rounded-md border border-white/15 shadow-sm shrink-0">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-10-5v2.5l10 5 10-5v-2.5l-10 5zM2 12v2.5l10 5 10-5V12l-10 5-10-5z"/></svg>
           </div>
           <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
             <div class="flex items-center gap-1.5">
-              <span class="text-base md:text-xl font-bold tracking-tight text-white">CallHealth</span>
-              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 text-[10px] md:text-xs font-black text-teal-200 border border-white/20 shadow-sm leading-none" title="Collaboration">✕</span>
-              <span class="text-base md:text-xl font-extrabold text-teal-100 tracking-wider">HITAM</span>
+              <span class="text-base md:text-lg font-bold tracking-tight text-white">{{ authStore.user?.company || 'CallHealth' }}</span>
+              <span class="text-white/40">•</span>
+              <span class="text-base md:text-lg font-bold text-white tracking-wide">HITAM</span>
             </div>
             <span class="hidden sm:inline text-white/30 font-light">|</span>
-            <span class="text-xs md:text-sm font-medium text-blue-100 tracking-wide">Project Tracker</span>
+            <span class="text-xs md:text-sm font-medium text-white/80 tracking-wide">Project Tracker</span>
           </div>
         </div>
-        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
-          <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-full border border-white/10 max-w-[250px] sm:max-w-none flex items-center gap-1.5">
+        <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+          <span class="text-xs md:text-sm font-medium bg-black/20 px-3 py-1.5 rounded-md border border-white/10 max-w-[280px] sm:max-w-none flex items-center gap-1.5">
             <svg class="w-3 h-3 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="truncate max-w-[80px] md:max-w-[120px]">{{ authStore.user?.name }}</span>
             <span class="opacity-50">|</span>
-            <span class="font-bold text-teal-200 text-xs md:text-sm">{{ authStore.user?.team || 'Unassigned' }}</span>
+            <span class="font-bold text-xs md:text-sm" :class="authStore.user?.company === 'Succeed International' ? 'text-white' : 'text-[#6fb733]'">{{ authStore.user?.team || 'Unassigned' }}</span>
+            <button @click="openChangeTeamModal" class="ml-1 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-[10px] uppercase font-bold text-white transition-colors" title="Change Team Module">
+              Change
+            </button>
           </span>
-          <button @click="handleLogout" class="hover:bg-white/20 p-2 md:px-3 md:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0">
-            <span class="hidden sm:inline text-sm font-bold">Logout</span>
+          <button @click="handleLogout" class="hover:bg-white/20 p-2 md:px-3 md:py-1.5 rounded-md transition-all flex items-center gap-1.5 shrink-0">
+            <span class="hidden sm:inline text-sm font-medium">Logout</span>
             <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           </button>
         </div>
       </div>
 
-      <div class="flex px-2 md:px-6 space-x-1 md:space-x-2 bg-black/20 pt-2 overflow-x-auto no-scrollbar">
-        <button v-for="tab in TABS" :key="tab.id" @click="activeTab = tab.id" :class="['px-4 md:px-5 py-3 text-xs md:text-sm font-semibold rounded-t-lg transition-all flex items-center gap-2 whitespace-nowrap shrink-0', activeTab === tab.id ? 'bg-slate-50 text-blue-700' : 'text-blue-50 hover:bg-white/10']">
+      <div :class="['flex px-2 md:px-6 space-x-1 md:space-x-2 pt-1.5 overflow-x-auto no-scrollbar border-t border-white/10', authStore.user?.company === 'Succeed International' ? 'bg-[#1e3a8a]' : 'bg-[#12226e]']">
+        <button v-for="tab in TABS" :key="tab.id" @click="activeTab = tab.id" :class="['px-4 md:px-5 py-2.5 text-xs md:text-sm font-semibold rounded-t-md transition-all flex items-center gap-2 whitespace-nowrap shrink-0', activeTab === tab.id ? (authStore.user?.company === 'Succeed International' ? 'bg-slate-50 text-blue-700 font-bold' : 'bg-slate-50 text-[#193099] font-bold border-t-2 border-t-[#6fb733]') : 'text-blue-100 hover:bg-white/10']">
           <span v-html="tab.icon"></span> {{ tab.label }}
         </button>
       </div>
@@ -43,12 +46,18 @@
       <div v-if="activeTab === 'overview'" class="space-y-6">
         
         <!-- Welcome Hero & Daily Log Callout -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-7 relative overflow-hidden">
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5 md:p-7 relative overflow-hidden">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
             <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
-                  {{ authStore.user?.team ? `Module: ${authStore.user.team}` : 'Unassigned Module' }}
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100 flex items-center gap-1.5">
+                  <span>{{ authStore.user?.team ? `Module: ${authStore.user.team}` : 'Unassigned Module' }}</span>
+                  <button @click="openChangeTeamModal" class="text-[10px] underline font-semibold text-blue-700 hover:text-blue-900 ml-1">
+                    Change
+                  </button>
+                </span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  {{ authStore.user?.company || 'CallHealth' }}
                 </span>
                 <span class="text-xs text-slate-400">•</span>
                 <span class="text-xs font-semibold text-slate-500 font-mono">{{ todayFormattedLong }}</span>
@@ -65,7 +74,7 @@
             <div v-if="authStore.user?.team && !hasLoggedToday" class="shrink-0">
               <button 
                 @click="quickStartLog" 
-                class="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-bold px-5 py-3 rounded-xl shadow-md transition-all active:scale-[0.98] text-sm"
+                :class="['w-full md:w-auto inline-flex items-center justify-center gap-2 text-white font-semibold px-4 py-2.5 rounded-md shadow-sm transition-colors text-xs md:text-sm', authStore.user?.company === 'Succeed International' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-[#6fb733] hover:bg-[#5da02a]']"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 Log Today's Work
@@ -75,7 +84,7 @@
             <div v-else-if="authStore.user?.team && hasLoggedToday" class="shrink-0">
               <button 
                 @click="quickStartLog" 
-                class="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all text-xs md:text-sm"
+                class="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-md border border-slate-200 transition-colors text-xs md:text-sm"
               >
                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 Edit Today's Log
@@ -219,7 +228,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           <!-- Recent Module Updates (2 cols) -->
-          <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6">
+          <div class="md:col-span-2 bg-white rounded-lg border border-slate-200 shadow-sm p-5 md:p-6">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <div>
                 <h3 class="text-base font-bold text-slate-800">Recent Module Activity</h3>
@@ -264,9 +273,9 @@
           <div class="space-y-4">
             
             <!-- Latest MoM Preview Card -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
               <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] uppercase tracking-wider font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">Meeting Notes</span>
+                <span class="text-[10px] uppercase tracking-wider font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">Meeting Notes</span>
                 <span v-if="allMoMs.length > 0" class="text-[10px] text-slate-400">{{ allMoMs.length }} recorded</span>
               </div>
               
@@ -288,10 +297,10 @@
             </div>
 
             <!-- Suggestions & Feedback Quick Link -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
               <div class="flex items-center justify-between mb-2">
                 <h4 class="text-sm font-bold text-slate-800">Feature Suggestions</h4>
-                <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
                   {{ teamSuggestions.length }} Logged
                 </span>
               </div>
@@ -305,7 +314,7 @@
             </div>
 
             <!-- Next Holiday / Non-working Day -->
-            <div v-if="upcomingHoliday" class="bg-slate-100/80 rounded-2xl border border-slate-200 p-4 text-xs">
+            <div v-if="upcomingHoliday" class="bg-slate-100/80 rounded-lg border border-slate-200 p-4 text-xs">
               <div class="flex items-center justify-between text-slate-500 mb-1">
                 <span class="font-bold uppercase tracking-wider text-[10px]">Upcoming Holiday</span>
                 <span class="font-mono text-[10px]">{{ new Date(upcomingHoliday.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
@@ -320,12 +329,12 @@
       </div>
       
       <div v-if="activeTab === 'daily'">
-        <div v-if="!authStore.user?.team" class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center shadow-sm">
+        <div v-if="!authStore.user?.team" class="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center shadow-sm">
           <svg class="w-12 h-12 text-amber-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
           <h3 class="text-base font-bold text-amber-800 mb-1">Team Assignment Pending</h3>
           <p class="text-sm text-amber-700">You are registered successfully! However, you have not been assigned to any project team yet. Please contact the CDC Admin to assign your team to start logging daily progress.</p>
         </div>
-        <div v-else class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div v-else class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div class="bg-slate-50/80 px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <h2 class="text-base md:text-lg font-bold text-slate-800">
               {{ editingLogId ? 'Edit Past Update' : 'Submit Progress Update' }}
@@ -418,7 +427,7 @@
                 {{ message }}
               </div>
               
-              <button type="submit" :disabled="isSubmitting || !isFormValid" :class="['w-full font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all duration-200 text-sm md:text-base', isSubmitting || !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300' : (editingLogId ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 text-white' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 text-white')]">
+              <button type="submit" :disabled="isSubmitting || !isFormValid" :class="['w-full font-semibold py-3 rounded-md shadow-sm transition-colors text-sm', isSubmitting || !isFormValid ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300' : (editingLogId ? 'bg-amber-600 hover:bg-amber-700 text-white' : (authStore.user?.company === 'Succeed International' ? 'bg-blue-700 hover:bg-blue-800 text-white' : 'bg-[#6fb733] hover:bg-[#5da02a] text-white'))]">
                 {{ isSubmitting ? 'Saving...' : (!isFormValid ? 'Fill required fields to submit' : (editingLogId ? 'Update Existing Log' : 'Submit Daily Update')) }}
               </button>
               
@@ -515,7 +524,7 @@
 
       <!-- Chronological Daily Progress Feed -->
       <div v-if="activeTab === 'progress'" class="space-y-6">
-        <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
           <div class="w-full md:w-auto">
             <h3 class="text-lg font-bold text-slate-800">Daily Workspace Progress</h3>
             <p class="text-xs text-slate-500 mt-0.5">Explore progress reports across all project teams</p>
@@ -534,18 +543,18 @@
           </div>
         </div>
 
-        <div v-if="filteredFeedDays.length === 0" class="border border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white shadow-sm">
+        <div v-if="filteredFeedDays.length === 0" class="border border-dashed border-slate-300 rounded-lg p-12 text-center bg-white shadow-sm">
           <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           <p class="text-sm font-semibold text-slate-500">No matching progress updates found.</p>
         </div>
 
         <div v-else class="space-y-8 relative before:absolute before:inset-y-0 before:left-4 md:before:left-6 before:w-0.5 before:bg-slate-200 pl-8 md:pl-12">
           <div v-for="day in paginatedFeedDays" :key="day.date" class="relative group">
-            <div class="absolute left-[-32px] md:left-[-48px] w-6 h-6 md:w-8 md:h-8 rounded-full border-4 border-slate-50 bg-gradient-to-tr from-teal-500 to-blue-500 shadow-sm z-10 flex items-center justify-center text-white text-[10px] font-bold">
+            <div class="absolute left-[-32px] md:left-[-48px] w-6 h-6 md:w-8 md:h-8 rounded-full border-4 border-slate-50 shadow-sm z-10 flex items-center justify-center text-white text-[10px] font-bold" :class="authStore.user?.company === 'Succeed International' ? 'bg-blue-700' : 'bg-[#193099]'">
               ✓
             </div>
             
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <div>
                   <h4 class="font-extrabold text-slate-800 text-sm md:text-base capitalize">
@@ -688,6 +697,47 @@
         </div>
       </div>
 
+      <!-- Change Team Modal -->
+      <div v-if="showChangeTeamModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl border border-slate-200 w-full max-w-md p-6 overflow-hidden relative">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              Change Assigned Module
+            </h3>
+            <button @click="showChangeTeamModal = false" class="text-slate-400 hover:text-slate-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-xs text-slate-500 mb-3">
+              Select the team module you are currently contributing to within <strong class="text-slate-700">{{ authStore.user?.company || 'your company' }}</strong>.
+            </p>
+            <div v-if="changeTeamMessage" class="p-2.5 rounded-lg text-xs font-semibold mb-3" :class="changeTeamMessage.includes('Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'">
+              {{ changeTeamMessage }}
+            </div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Select Team</label>
+            <select v-model="newTeamSelection" class="w-full rounded-xl border border-slate-200 py-2.5 px-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none bg-white font-medium text-slate-700">
+              <option value="">Unassigned</option>
+              <option v-for="team in availableTeams" :key="team" :value="team">
+                {{ team }}
+              </option>
+            </select>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button @click="showChangeTeamModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+              Cancel
+            </button>
+            <button @click="saveTeamChange" :disabled="isUpdatingTeam" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5">
+              <span v-if="isUpdatingTeam">Saving...</span>
+              <span v-else>Update Team</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
@@ -723,7 +773,48 @@ const myLogs = ref([])
 const allLogs = ref([])
 const allMoMs = ref([])
 const allHolidays = ref([])
-const availableTeams = ref(["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"])
+const availableTeams = ref([])
+
+// Change Team Modal State
+const showChangeTeamModal = ref(false)
+const newTeamSelection = ref('')
+const isUpdatingTeam = ref(false)
+const changeTeamMessage = ref('')
+
+const openChangeTeamModal = () => {
+  newTeamSelection.value = authStore.user?.team || ''
+  changeTeamMessage.value = ''
+  showChangeTeamModal.value = true
+}
+
+const saveTeamChange = async () => {
+  if (!authStore.user?.id) return
+  isUpdatingTeam.value = true
+  changeTeamMessage.value = ''
+  try {
+    const userCompany = authStore.user?.company || 'CallHealth'
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}?company=${encodeURIComponent(userCompany)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team: newTeamSelection.value, company: userCompany })
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      authStore.user.team = updated.team
+      localStorage.setItem('trackerUser', JSON.stringify(authStore.user))
+      changeTeamMessage.value = 'Success! Module updated.'
+      setTimeout(() => {
+        showChangeTeamModal.value = false
+      }, 700)
+    } else {
+      changeTeamMessage.value = 'Failed to update module.'
+    }
+  } catch (err) {
+    changeTeamMessage.value = 'Network error.'
+  } finally {
+    isUpdatingTeam.value = false
+  }
+}
 
 const feedFilterDate = ref('')
 const feedSearchQuery = ref('')
@@ -853,7 +944,8 @@ onMounted(async () => {
     // Refresh user profile if it's a student (id > 0)
     if (authStore.user && authStore.user.id > 0) {
       try {
-        const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}`)
+        const userCompany = authStore.user?.company || 'CallHealth'
+        const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}?company=${encodeURIComponent(userCompany)}`)
         if (userRes.ok) {
           const freshUser = await userRes.json()
           authStore.user = freshUser
@@ -864,11 +956,14 @@ onMounted(async () => {
       }
     }
 
+    const userCompany = authStore.user?.company || 'CallHealth'
+    const comp = encodeURIComponent(userCompany)
+
     const [logsRes, momRes, holidaysRes, teamsRes] = await Promise.all([
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/`),
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs?company=${comp}`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/mom/?company=${comp}`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/holidays/?company=${comp}`),
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/api/teams?company=${comp}`)
     ])
     
     // Process Teams
@@ -919,9 +1014,11 @@ const submitLog = async () => {
   message.value = ''
   
   try {
+    const userCompany = authStore.user?.company || 'CallHealth'
+    const comp = encodeURIComponent(userCompany)
     const method = editingLogId.value ? 'PUT' : 'POST'
     const url = editingLogId.value 
-      ? `${import.meta.env.VITE_API_BASE_URL}/api/logs/${editingLogId.value}`
+      ? `${import.meta.env.VITE_API_BASE_URL}/api/logs/${editingLogId.value}?company=${comp}`
       : `${import.meta.env.VITE_API_BASE_URL}/api/logs`
 
     const res = await fetch(url, {
@@ -932,6 +1029,7 @@ const submitLog = async () => {
         name: authStore.user.name,
         rollNumber: authStore.user.rollNumber,
         team: authStore.user.team,
+        company: userCompany,
         hours: selectedHours.value,
         todayLog: todayLog.value,
         tomorrowGoal: tomorrowGoal.value,
@@ -947,7 +1045,7 @@ const submitLog = async () => {
       setTimeout(() => message.value = '', 3000)
       
       // Auto-refresh logs table using the new robust helper
-      const newLogRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs`)
+      const newLogRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logs?company=${comp}`)
       const newLogs = await newLogRes.json()
       if (Array.isArray(newLogs)) {
         allLogs.value = newLogs

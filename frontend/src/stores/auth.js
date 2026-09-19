@@ -4,10 +4,15 @@ import { ref } from 'vue'
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('trackerUser')) || null)
   const authError = ref('')
+  const selectedCompany = ref(localStorage.getItem('adminSelectedCompany') || 'CallHealth')
+
+  function setSelectedCompany(company) {
+    selectedCompany.value = company
+    localStorage.setItem('adminSelectedCompany', company)
+  }
 
   async function login(rollNumber, password) {
     try {
-      // FIX 2: Correct URL
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -20,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
         authError.value = ''
         return true
       } else {
-        authError.value = 'Roll number not found. Please register.'
+        authError.value = 'Invalid roll number or password.'
         return false
       }
     } catch (err) {
@@ -31,11 +36,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(userData) {
     try {
-      // FIX 2: Correct URL
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData) // FIX 3: Pass userData, not just rollNumber!
+        body: JSON.stringify(userData)
       })
       if (res.ok) {
         const data = await res.json()
@@ -44,7 +48,8 @@ export const useAuthStore = defineStore('auth', () => {
         authError.value = ''
         return true
       } else {
-        authError.value = 'Roll number already exists or invalid data.'
+        const errData = await res.json().catch(() => ({}))
+        authError.value = errData.detail || 'Roll number already exists or invalid data.'
         return false
       }
     } catch (err) {
@@ -79,8 +84,8 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     localStorage.removeItem('trackerUser')
+    localStorage.removeItem('adminSelectedCompany')
   }
 
-  // Make sure to export register!
-  return { user, authError, login, register, adminLogin, logout }
+  return { user, authError, selectedCompany, setSelectedCompany, login, register, adminLogin, logout }
 })

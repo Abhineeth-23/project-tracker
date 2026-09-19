@@ -8,26 +8,45 @@ from sqlalchemy import text
 
 Base.metadata.create_all(bind=engine)
 
-# Pre-populate default teams if teams table is empty
+# Pre-populate default teams if physical tables are empty
 from .database import SessionLocal
-from .models import Team
+from .models import CallHealthTeam, SucceedTeam
 db = SessionLocal()
 try:
-    if db.query(Team).count() == 0:
-        default_teams = ["Digi Yatra", "OCR", "FHIR", "MIRTH Connect", "ChatBot", "Blood Connect"]
+    if db.query(CallHealthTeam).count() == 0:
+        default_teams = [
+            "Blood Connect", "Prachtiz", "CHAV", "Automation", 
+            "Ambulance Connect", "Audit", "CHID", "FHIR", 
+            "MIRTH Connect", "Digi Yatra", "OCR", "ChatBot"
+        ]
         for team_name in default_teams:
-            db.add(Team(name=team_name))
+            db.add(CallHealthTeam(name=team_name, company="CallHealth"))
+        db.commit()
+    
+    if db.query(SucceedTeam).count() == 0:
+        succeed_default_teams = ["Full Stack", "AI & ML", "Cloud Architecture", "QA & Testing"]
+        for team_name in succeed_default_teams:
+            db.add(SucceedTeam(name=team_name, company="Succeed International"))
         db.commit()
 except Exception as e:
-    print(f"⚠️ Warning: Could not pre-populate teams: {e}")
+    print(f"[!] Warning: Could not pre-populate physical teams: {e}")
 finally:
     db.close()
 
-app = FastAPI(title="CallHealth X HITAM Project Tracker")
+app = FastAPI(title="Project Tracker Workspace (CallHealth & Succeed International)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://project-tracker-k3h2.onrender.com","http://localhost:5173","http://localhost:5174"],
+    allow_origins=[
+        "https://project-tracker-k3h2.onrender.com",
+        "https://project-tracker-nb5j.onrender.com",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
