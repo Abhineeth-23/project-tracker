@@ -793,7 +793,8 @@ const saveTeamChange = async () => {
   changeTeamMessage.value = ''
   try {
     const userCompany = authStore.user?.company || 'CallHealth'
-    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}?company=${encodeURIComponent(userCompany)}`, {
+    const lookupKey = authStore.user.rollNumber || authStore.user.id
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${encodeURIComponent(lookupKey)}?company=${encodeURIComponent(userCompany)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ team: newTeamSelection.value, company: userCompany })
@@ -942,14 +943,18 @@ watch(selectedDate, handleDateChange)
 onMounted(async () => {
   try {
     // Refresh user profile if it's a student (id > 0)
-    if (authStore.user && authStore.user.id > 0) {
+    if (authStore.user && (authStore.user.id > 0 || authStore.user.rollNumber)) {
       try {
         const userCompany = authStore.user?.company || 'CallHealth'
-        const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${authStore.user.id}?company=${encodeURIComponent(userCompany)}`)
+        const lookupKey = authStore.user.rollNumber || authStore.user.id
+        const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${encodeURIComponent(lookupKey)}?company=${encodeURIComponent(userCompany)}`)
         if (userRes.ok) {
           const freshUser = await userRes.json()
-          authStore.user = freshUser
-          localStorage.setItem('trackerUser', JSON.stringify(freshUser))
+          // Safety guard: only update if roll numbers match
+          if (!authStore.user.rollNumber || freshUser.rollNumber.toUpperCase() === authStore.user.rollNumber.toUpperCase()) {
+            authStore.user = freshUser
+            localStorage.setItem('trackerUser', JSON.stringify(freshUser))
+          }
         }
       } catch (userErr) {
         console.error("Failed to refresh user profile:", userErr)

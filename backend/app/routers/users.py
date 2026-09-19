@@ -99,34 +99,42 @@ def get_all_users(company: Optional[str] = None, db: Session = Depends(get_db)):
         si_users = db.query(models.SucceedUser).all()
         return list(ch_users) + list(si_users)
 
-@router.get("/{user_id}", response_model=schemas.UserResponse)
-def get_user(user_id: int, company: Optional[str] = None, db: Session = Depends(get_db)):
+def _find_user(identifier: str, company: Optional[str], db: Session):
+    clean_id = identifier.strip()
+    is_numeric = clean_id.isdigit()
+    
     if company:
         m = models.get_company_models(company)
-        db_user = db.query(m["User"]).filter(m["User"].id == user_id).first()
+        UserModel = m["User"]
+        if is_numeric:
+            u = db.query(UserModel).filter(UserModel.id == int(clean_id)).first()
+            if u: return u
+        return db.query(UserModel).filter(UserModel.rollNumber == clean_id.upper()).first()
     else:
-        db_user = db.query(models.CallHealthUser).filter(models.CallHealthUser.id == user_id).first()
-        if not db_user:
-            db_user = db.query(models.SucceedUser).filter(models.SucceedUser.id == user_id).first()
-            
+        # Check CallHealth first
+        if is_numeric:
+            u = db.query(models.CallHealthUser).filter(models.CallHealthUser.id == int(clean_id)).first()
+            if u: return u
+        u = db.query(models.CallHealthUser).filter(models.CallHealthUser.rollNumber == clean_id.upper()).first()
+        if u: return u
+        
+        # Check Succeed
+        if is_numeric:
+            u = db.query(models.SucceedUser).filter(models.SucceedUser.id == int(clean_id)).first()
+            if u: return u
+        return db.query(models.SucceedUser).filter(models.SucceedUser.rollNumber == clean_id.upper()).first()
+
+@router.get("/{identifier}", response_model=schemas.UserResponse)
+def get_user(identifier: str, company: Optional[str] = None, db: Session = Depends(get_db)):
+    db_user = _find_user(identifier, company, db)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-@router.put("/{user_id}", response_model=schemas.UserResponse)
-def update_user(user_id: int, user_update: schemas.UserUpdate, company: Optional[str] = None, db: Session = Depends(get_db)):
-    # Find user in the right physical table
+@router.put("/{identifier}", response_model=schemas.UserResponse)
+def update_user(identifier: str, user_update: schemas.UserUpdate, company: Optional[str] = None, db: Session = Depends(get_db)):
     comp = company or user_update.company
-    db_user = None
-    if comp:
-        m = models.get_company_models(comp)
-        db_user = db.query(m["User"]).filter(m["User"].id == user_id).first()
-    
-    if not db_user:
-        db_user = db.query(models.CallHealthUser).filter(models.CallHealthUser.id == user_id).first()
-        if not db_user:
-            db_user = db.query(models.SucceedUser).filter(models.SucceedUser.id == user_id).first()
-            
+    db_user = _find_user(identifier, comp, db)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -139,17 +147,9 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, company: Optional
     db.refresh(db_user)
     return db_user
 
-@router.delete("/{user_id}")
-def delete_user(user_id: int, company: Optional[str] = None, db: Session = Depends(get_db)):
-    db_user = None
-    if company:
-        m = models.get_company_models(company)
-        db_user = db.query(m["User"]).filter(m["User"].id == user_id).first()
-    else:
-        db_user = db.query(models.CallHealthUser).filter(models.CallHealthUser.id == user_id).first()
-        if not db_user:
-            db_user = db.query(models.SucceedUser).filter(models.SucceedUser.id == user_id).first()
-
+@router.delete("/{identifier}")
+def delete_user(identifier: str, company: Optional[str] = None, db: Session = Depends(get_db)):
+    db_user = _find_user(identifier, company, db)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
